@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1518</width>
+    <height>661</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="layoutDirection">
+   <enum>Qt::LeftToRight</enum>
+  </property>
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>0</y>
+     <width>1551</width>
+     <height>661</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="whatsThis">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="Tab1">
+    <attribute name="title">
+     <string>Visualization</string>
+    </attribute>
+    <widget class="QTreeWidget" name="treeWidget">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>60</y>
+       <width>171</width>
+       <height>471</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string>Objects</string>
+      </property>
+     </column>
+     <item>
+      <property name="text">
+       <string>Category 01</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>Type 01</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>Object 01</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Object 02</string>
+        </property>
+       </item>
+      </item>
+      <item>
+       <property name="text">
+        <string>Type 02</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>Object 03</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Object 04</string>
+        </property>
+       </item>
+      </item>
+     </item>
+     <item>
+      <property name="text">
+       <string>Category 02</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QTableWidget" name="tableWidget">
+     <property name="geometry">
+      <rect>
+       <x>200</x>
+       <y>60</y>
+       <width>750</width>
+       <height>511</height>
+      </rect>
+     </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QTableWidget{
+setColumnCount(4)
+setColumnWidth(0, 200)
+setColumnWidth(1, 200)
+setColumnWidth(2, 200)
+setColumnWidth(3, 200)
+}</string>
+     </property>
+     <column>
+      <property name="text">
+       <string>Object</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Location</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Calibration</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Quantity</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Category</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QPushButton" name="insertDataButton">
+     <property name="geometry">
+      <rect>
+       <x>1120</x>
+       <y>530</y>
+       <width>121</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Insert data</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_4">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>91</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>Icons/2912620.png</normaloff>Icons/2912620.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>50</width>
+       <height>50</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_5">
+     <property name="geometry">
+      <rect>
+       <x>90</x>
+       <y>0</y>
+       <width>91</width>
+       <height>51</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>Icons/gps.png</normaloff>Icons/gps.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>50</width>
+       <height>50</height>
+      </size>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_7">
+     <property name="geometry">
+      <rect>
+       <x>1120</x>
+       <y>430</y>
+       <width>121</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Verify</string>
+     </property>
+    </widget>
+    <widget class="QToolBox" name="toolBox">
+     <property name="geometry">
+      <rect>
+       <x>1120</x>
+       <y>10</y>
+       <width>127</width>
+       <height>251</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="page">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>127</width>
+        <height>195</height>
+       </rect>
+      </property>
+      <attribute name="icon">
+       <iconset>
+        <normaloff>../../../../../Downloads/abstract-user-flat-1.png</normaloff>../../../../../Downloads/abstract-user-flat-1.png</iconset>
+      </attribute>
+      <attribute name="label">
+       <string>User</string>
+      </attribute>
+      <widget class="QPushButton" name="profileButton">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>30</y>
+         <width>141</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Profil</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_8">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>90</y>
+         <width>131</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Projects</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="pushButton_11">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>150</y>
+         <width>131</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Sign Out</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="page_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>127</width>
+        <height>195</height>
+       </rect>
+      </property>
+      <attribute name="icon">
+       <iconset>
+        <normaloff>../../../../../Downloads/chevron-up.svg</normaloff>../../../../../Downloads/chevron-up.svg</iconset>
+      </attribute>
+      <attribute name="label">
+       <string/>
+      </attribute>
+      <widget class="QFrame" name="frame">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>120</width>
+         <height>351</height>
+        </rect>
+       </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::NoContextMenu</enum>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QPushButton" name="pushButton_12">
+     <property name="geometry">
+      <rect>
+       <x>1120</x>
+       <y>480</y>
+       <width>121</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Modify</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="reset_btn">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>550</y>
+       <width>171</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reset</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>History and Tendency</string>
+    </attribute>
+    <widget class="QTableWidget" name="tableWidget_2">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>60</y>
+       <width>1350</width>
+       <height>561</height>
+      </rect>
+     </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QTableWidget{
+setColumnCount(4)
+setColumnWidth(0, 200)
+setColumnWidth(1, 200)
+setColumnWidth(2, 200)
+setColumnWidth(3, 200)
+}</string>
+     </property>
+     <column>
+      <property name="text">
+       <string>Object</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Location</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Calibration</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Action</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Quantity</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Name</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Operation_date</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Project</string>
+      </property>
+     </column>
+    </widget>
+    <widget class="QWidget" name="widget" native="true">
+     <property name="geometry">
+      <rect>
+       <x>9</x>
+       <y>120</y>
+       <width>181</width>
+       <height>501</height>
+      </rect>
+     </property>
+     <widget class="QPushButton" name="btn_plot_act_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>60</y>
+        <width>181</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Plot_</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="btn_plot_act_3">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>200</y>
+        <width>181</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Plot_</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="btn_plot_act_4">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>370</y>
+        <width>181</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Plot_</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QPushButton" name="btn_plot_act">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>40</y>
+       <width>181</width>
+       <height>81</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Plot_Activity</string>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="Why_Box">
+     <property name="geometry">
+      <rect>
+       <x>560</x>
+       <y>0</y>
+       <width>121</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="Who_Box">
+     <property name="geometry">
+      <rect>
+       <x>850</x>
+       <y>0</y>
+       <width>171</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="What_Box">
+     <property name="geometry">
+      <rect>
+       <x>700</x>
+       <y>0</y>
+       <width>121</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="date_Box">
+     <property name="geometry">
+      <rect>
+       <x>1030</x>
+       <y>0</y>
+       <width>151</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="Quantity_Box">
+     <property name="geometry">
+      <rect>
+       <x>1310</x>
+       <y>0</y>
+       <width>121</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="currentText">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QComboBox" name="action_box">
+     <property name="geometry">
+      <rect>
+       <x>1190</x>
+       <y>0</y>
+       <width>101</width>
+       <height>31</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_4">
+    <attribute name="title">
+     <string>Tools localisation</string>
+    </attribute>
+   </widget>
+   <widget class="QWidget" name="tab_2">
+    <attribute name="title">
+     <string>Orders</string>
+    </attribute>
+   </widget>
+   <widget class="QWidget" name="tab">
+    <attribute name="title">
+     <string>Help</string>
+    </attribute>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

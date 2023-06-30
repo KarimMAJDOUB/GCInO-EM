@@ -1,0 +1,212 @@
+# -*- coding: utf-8 -*-
+
+################################################################################
+## Form generated from reading UI file 'form.ui'
+##
+## Created by: Qt User Interface Compiler version 6.5.0
+##
+## WARNING! All changes made in this file will be lost when recompiling UI file!
+################################################################################
+import os
+from PyQt6.uic import loadUi
+from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QTableWidget, QTableWidgetItem
+from database import Database
+from configparser import ConfigParser
+import pymysql.connections as MySQLdb
+
+class gcinodesign(QDialog):
+    def __init__(self, table, table2):
+        self.table = table
+        self.table2 = table2
+        self.designTables()
+
+    def designTables(self):
+        cols=["Object","Type","Location","Calibration","Quantity", "Category"]
+        cols_hist= ["Object","Type","Location","Calibration", "Action", "Quantity", "Name", "Date", "Project"]
+        for i in range(len(cols) -1):
+            self.table.setColumnWidth(i,150)
+        self.table.setColumnWidth(5,1)
+        self.table.setHorizontalHeaderLabels(cols)
+
+        for i in range(len(cols_hist)):
+            self.table2.setColumnWidth(i,150)
+        self.table2.setHorizontalHeaderLabels(cols_hist)
+
+class gcinotables(QMainWindow):
+    def __init__(self, tableWidget, tableWidget2):
+        """
+        """
+        super(gcinotables, self).__init__()
+        self.tableWidget = tableWidget
+        self.tableWidget_2 = tableWidget2
+
+        #Backend
+        self.db = Database()
+        config_object = ConfigParser()
+        self.path_to_config = os.path.dirname(os.path.dirname(__file__)) + "\system_files\config.ini"
+        config_object.read(self.path_to_config)
+        userInfo = config_object["USERINFO"]
+        self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
+        
+        #Display tables
+        """self.timer = QTimer()
+        self.timer.timeout.connect(self.loadData)
+        self.timer.start(1000)"""
+        self.loadData()
+
+    def loadData(self):
+        """This function loads data from an SQL database in the "Corps" user interface.
+        Usage:
+        -----------
+            ui = Ui_Corps()s
+            ui.load_data_from_SQL()
+        Return:
+        -----------
+            None
+        Raises:
+        -----------
+            ConnectionError: If there is a problem connecting to the SQL database.
+            DataLoadError: If there is an error during the data loading process.
+        """
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                   database=self.db.DB_NAME)
+            cursor = conn.cursor()
+            sql_query = """SELECT 
+                            Object, Type_object, Location, CAST(Calibration as char), CAST(Quantity as char), Category
+                        FROM 
+                            fakegcino.object_dist
+                        """
+            cursor.execute(sql_query)
+            myresult = cursor.fetchall()
+
+            table_row = 0
+            self.tableWidget.setRowCount(len(myresult))
+            for row in myresult:
+                self.tableWidget.setItem(table_row, 0, QTableWidgetItem(row[0]))
+                self.tableWidget.setItem(table_row, 1, QTableWidgetItem(row[1]))
+                self.tableWidget.setItem(table_row, 2, QTableWidgetItem(row[2]))
+                self.tableWidget.setItem(table_row, 3, QTableWidgetItem(row[3]))
+                self.tableWidget.setItem(table_row, 4, QTableWidgetItem(row[4]))
+                self.tableWidget.setItem(table_row, 5, QTableWidgetItem(row[5]))
+                table_row = table_row +1  
+
+            conn2 = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                   database=self.db.DB_NAME
+                                   )
+            cursor2 = conn2.cursor()
+            sql_query2 = """SELECT 
+                                o.Object, o.Type_object, o.Location, CAST(o.Calibration as char),actions, CAST(o.Quantity as char), CONCAT_WS(" ", m.firstname, m.lastname),
+                                CAST(o.operation_datetime as char), o.project_name
+                            FROM 
+                                fakegcino.object_dist as o
+                            INNER JOIN
+                                fakegcino.managers as m
+                            ON
+                                m.id = o.user_id
+                                
+                        """
+            cursor2.execute(sql_query2)
+            myresult2 = cursor2.fetchall()
+
+            table_row2 = 0
+            self.tableWidget_2.setRowCount(len(myresult2))
+            for row in myresult2:
+                self.tableWidget_2.setItem(table_row2, 0, QTableWidgetItem(row[0]))
+                self.tableWidget_2.setItem(table_row2, 1, QTableWidgetItem(row[1]))
+                self.tableWidget_2.setItem(table_row2, 2, QTableWidgetItem(row[2]))
+                self.tableWidget_2.setItem(table_row2, 3, QTableWidgetItem(row[3]))
+                self.tableWidget_2.setItem(table_row2, 4, QTableWidgetItem(row[4]))
+                self.tableWidget_2.setItem(table_row2, 5, QTableWidgetItem(row[5]))
+                self.tableWidget_2.setItem(table_row2, 6, QTableWidgetItem(row[6]))
+                self.tableWidget_2.setItem(table_row2, 7, QTableWidgetItem(row[7]))
+                self.tableWidget_2.setItem(table_row2, 8, QTableWidgetItem(row[8]))
+                table_row2 = table_row2 +1    
+        except Exception as e:
+            print("Error while connecting to MySQL",e)
+
+class gcinotree(QDialog):
+    def __init__(self, treeWidget):
+        """
+        """
+        super(gcinotree, self).__init__()
+        self.treeWidget = treeWidget
+        #Backend
+        self.db = Database()
+        config_object = ConfigParser()
+        self.path_to_config = os.path.dirname(os.path.dirname(__file__)) + "\system_files\config.ini"
+        config_object.read(self.path_to_config)
+        userInfo = config_object["USERINFO"]
+        self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
+        self.groupTreeItems()
+
+    def groupTreeItems(self):
+        """
+        """
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                   database=self.db.DB_NAME)
+            cursor = conn.cursor()
+            sql_query = """SELECT 
+                                DISTINCT Category,Type_object, Object 
+                            FROM 
+                                object_dist
+                        """
+            self.treeWidget.clear()
+            cursor.execute(sql_query)
+            results = cursor.fetchall()
+            parent_items = {}
+
+            for row in results:
+                category = row[0]
+                type_object = row[1]
+                obj = row[2]
+
+                if category in parent_items:
+                    parent_item = parent_items[category]
+                else:
+                    parent_item = QTreeWidgetItem(self.treeWidget, [category])
+                    parent_items[category] = parent_item
+
+                child_items = [parent_item.child(i) for i in range(parent_item.childCount())]
+                child_item = next((item for item in child_items if item.text(0) == type_object), None)
+
+                if child_item is None:
+                    child_item = QTreeWidgetItem(parent_item, [type_object])
+
+                QTreeWidgetItem(child_item, [obj])
+
+        except Exception as e:
+            print("Error while connecting to MySQL",e)
+
+class gcinobox(QDialog):
+    def __init__(self, Box, query):
+        """
+        
+        """
+        super(gcinobox, self).__init__()
+        self.Box = Box
+        self.query = query
+        self.ui = loadUi(os.path.join(os.path.dirname(__file__), "corps.ui"), self)
+
+        self.db = Database()
+        config_object = ConfigParser()
+        config_object.read("config.ini")
+        userInfo = config_object["USERINFO"]
+        self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
+
+        self.loadBox()
+
+    def loadBox(self):
+        """
+        
+        """
+        conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                   database=self.db.DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute(self.query)
+        data = cursor.fetchall()
+        self.Box.addItem("All")
+        for i in data :
+            var = str(i[0])
+            self.Box.addItem(var)
