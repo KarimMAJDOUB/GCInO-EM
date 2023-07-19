@@ -17,3 +17,26 @@ class Database:
         self.DB_USERNAME = databaseInfo["DB_USERNAME"]
         self.DB_PASSWORD = databaseInfo["DB_PASSWORD"]
         self.DB_NAME = databaseInfo["DB_NAME"]
+
+        self.conn = MySQLdb.Connection(host= self.DB_SERVER,
+                                     user = self.DB_USERNAME,
+                                     password= self.DB_PASSWORD, 
+                                     database= self.DB_NAME
+                                    )
+    
+    def connectToDB(self):
+        """
+        """
+        return self.conn
+        
+    def executeQuery(self, query, fetch ='one'):
+        """
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        if fetch =='one':
+            data = cursor.fetchone()
+        else:
+            data = cursor.fetchall()
+        return data
+
