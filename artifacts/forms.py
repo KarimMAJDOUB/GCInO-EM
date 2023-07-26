@@ -17,7 +17,7 @@ from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
 from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QFileDialog
+from PyQt6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QFileDialog, QLineEdit
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 
@@ -259,7 +259,7 @@ class projectform(QDialog):
             None
         """
         super(projectform, self).__init__()
-        self.ui = loadUi(os.path.join(os.path.dirname(__file__), "plot_activ.ui"), self)
+        self.ui = loadUi(os.path.join(os.path.dirname(__file__), "proj_form.ui"), self)
 
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
@@ -304,7 +304,7 @@ class projectform(QDialog):
         conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                    database=self.db.DB_NAME)
         cursor = conn.cursor()
-        query_add = f"SELECT operation_datetime, Quantity FROM object_dist WHERE actions = 'Adding' AND user_id='{self.LOGGED_USER_ID}'"
+        query_add = f"SELECT operation_datetime, Quantity FROM object_dist WHERE actions = 'Adding' AND user_id='{self.LOGGED_USER_ID}' Order by operation_datetime"
         cursor.execute(query_add)
         table_add = cursor.fetchall()
         ss_aaaa_add = []
@@ -320,7 +320,7 @@ class projectform(QDialog):
             weeks.append(i)
             activities.append(result[i])
         #-------------------------------------------Take out activity--------------------------------------------#
-        query_take = f"SELECT operation_datetime, Quantity FROM object_dist WHERE actions = 'Take Out' AND user_id='{self.LOGGED_USER_ID}'"
+        query_take = f"SELECT operation_datetime, Quantity FROM object_dist WHERE actions = 'Take Out' AND user_id='{self.LOGGED_USER_ID}' Order BY operation_datetime"
         cursor.execute(query_take)
         table_take = cursor.fetchall()
         ss_aaaa_take = []
@@ -339,7 +339,7 @@ class projectform(QDialog):
         self.figure.clear()
         ax = self.figure.add_subplot(121)
         ax.plot(weeks, activities, 'o-', label='Adding action')
-        ax.plot(weeks_take, activities_take, 'o-', label='take out action')
+        ax.plot(weeks_take, activities_take, 'o-', label='Take out action')
         ax.set_title('Activity by SS-AAAA')
         ax.set_xlabel('SS-AAAA')
         ax.set_ylabel('Quantity')
@@ -347,7 +347,7 @@ class projectform(QDialog):
 
         ax = self.figure.add_subplot(122)
         ax.scatter(ss_aaaa_add, activ_add, label='Adding action')
-        ax.scatter(ss_aaaa_take, activ_take)
+        ax.scatter(ss_aaaa_take, activ_take, label='Take out action')
         ax.set_title('Activity by SS-AAAA')
         ax.set_xlabel('SS-AAAA')
         ax.set_ylabel('Quantity')
@@ -942,3 +942,24 @@ class tendency(QDialog):
                 document.save(download_path)
         except Exception as e:
             QMessageBox.about(self, "Error", "error : "+ str(e))       
+
+class modifyform(insertform):
+    def __init__(self,table_widget):
+        super().__init__()
+        self.table_widget = table_widget
+        self.table_widget.cellClicked.connect(self.fillForm)
+        self.uim = self.ui
+        self.uim.insertButton.clicked.connect(self.insertData)
+        self.uim.cancelButton.clicked.connect(self.cancel)
+
+    def fillForm(self, row, col):
+        items = []
+        for col in range(self.table_widget.columnCount()):
+            item = self.table_widget.item(row, col)
+            items.append(item)
+
+        self.uim.objectText.setText(items[0].text())
+        self.uim.TypeBox.setCurrentText(items[1].text())
+        self.uim.locationText.setText(items[2].text())
+        self.uim.calibrationText.setText(items[3].text())
+        self.uim.quantityText.setText(items[4].text())

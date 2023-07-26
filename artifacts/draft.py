@@ -1,21 +1,36 @@
-# -*- coding: utf-8 -*-
+from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QLabel, QWidget
+import sys
+import os 
+from PyQt6.uic import loadUi
 
-################################################################################
-## Form generated from reading UI file 'form.ui'
-##
-## Created by: Qt User Interface Compiler version 6.5.0
-##
-## WARNING! All changes made in this file will be lost when recompiling UI file!
-################################################################################
+
 import os
 import sys
 from PyQt6.QtWidgets import QMainWindow
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QDialog
 from PyQt6.uic import loadUi
 from setup import gcinodesign, gcinotree, gcinotables, gcinobox
 from events import eventshandler, filterevents
+from forms import modifyform
 
-class gcinocorps(QMainWindow):
+
+class MyWidget(QDialog):
+    def __init__(self,table_widget):
+        super().__init__()
+        self.table_widget = table_widget
+        self.table_widget.cellClicked.connect(self.on_cell_clicked)
+        self.uim = loadUi(os.path.join(os.path.dirname(__file__), "modify.ui"), self)
+
+    def on_cell_clicked(self, row, col):
+        # Récupérer les éléments (items) de la ligne cliquée
+        items = []
+        for col in range(self.table_widget.columnCount()):
+            item = self.table_widget.item(row, col)
+            items.append(item)
+        print(items)
+        self.uim.objectText.setText(items[0].text())
+
+class gcinocorps(QDialog):
     def __init__(self):
         super(gcinocorps, self).__init__()
         self.ui = loadUi(os.path.join(os.path.dirname(__file__), "corps.ui"), self)
@@ -26,22 +41,24 @@ class gcinocorps(QMainWindow):
         self.col_list = ["project_name", "name", "operation_datetime", "actions", "Type_object" ]
         
         self.gcino_window = gcinodesign(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.tab_3)
-        self.gcino_tree = gcinotree(self.ui.treeWidget)
+        self.gcino_tree = gcinotree(self.ui.treeWidget, self.ui.treeWidget_2)
         self.gcino_table = gcinotables(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.export_csv_btn, self.ui.What_Box)
         for i in range(len(self.query_list)-1):
             self.Box = gcinobox(self.Box_list[i], self.query_list[i], type="all")
-            
         self.Box = gcinobox(self.Box_list[len(self.query_list)-1], self.query_list[len(self.query_list)-1], type="one")
         
-        self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget,self.col_list, self.ui.treeWidget, type="all")
-        self.returnForms()
+        self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget,self.col_list, self.ui.treeWidget,self.ui.treeWidget_2, self.ui.search, type='all')
         
+        self.returnForms()
+          
     def returnForms(self):
         self.ui.insertDataButton.clicked.connect(eventshandler.openInsertionForm)
         self.ui.profileButton.clicked.connect(eventshandler.openProfileForm)
         self.ui.projectButton.clicked.connect(eventshandler.openProjForm)
         self.ui.btn_plot_act.clicked.connect(eventshandler.openPlotForm)
+        self.ui.tableWidget.cellClicked.connect(MyWidget(self.ui.tableWidget).exec)
         self.ui.treeWidget.clicked.connect(self.filter.filterTree)
+        self.ui.treeWidget_2.clicked.connect(self.filter.filterLocationTree)
         
         for combo_box in self.Box_list:
             combo_box.currentIndexChanged.connect(self.filter.filterBox)
@@ -50,9 +67,5 @@ class gcinocorps(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = gcinocorps()
-    window.plotButtonClicked.connect(window.event_handler.openPlotForm)
     window.show()
     sys.exit(app.exec())
-
-
-

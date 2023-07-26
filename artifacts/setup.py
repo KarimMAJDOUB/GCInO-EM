@@ -160,6 +160,8 @@ class gcinotables(QMainWindow):
         except Exception as e:
             print("Error while connecting to MySQL",e)
 
+        return self.tableWidget, self.tableWidget_2
+
     def exportCSV(self):
         now = datetime.now()
         date_time = now.strftime("%Y_%m_%d")
@@ -196,11 +198,13 @@ class gcinotables(QMainWindow):
             QMessageBox.warning(self, "Warning", "No file selected for export.")
             
 class gcinotree(QDialog):
-    def __init__(self, treeWidget):
+    def __init__(self, treeWidget, treeWidget_2):
         """
         """
         super(gcinotree, self).__init__()
         self.treeWidget = treeWidget
+        self.treeWidget_2 = treeWidget_2
+        self.treeWidget_2.hide()
         #Backend
         self.db = Database()
         config_object = ConfigParser()
@@ -209,6 +213,7 @@ class gcinotree(QDialog):
         userInfo = config_object["USERINFO"]
         self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
         self.groupTreeItems()
+        self.groupTreeLocationItems()
 
     def groupTreeItems(self):
         """
@@ -221,6 +226,8 @@ class gcinotree(QDialog):
                                 DISTINCT Category,Type_object, Object 
                             FROM 
                                 object_dist
+                            ORDER BY 
+                                Category, Type_object
                         """
             self.treeWidget.clear()
             cursor.execute(sql_query)
@@ -242,6 +249,42 @@ class gcinotree(QDialog):
                 QTreeWidgetItem(child_item, [obj])
         except Exception as e:
             print("Error while connecting to MySQL",e)
+
+    def groupTreeLocationItems(self):
+        """
+        """
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                   database=self.db.DB_NAME)
+            cursor = conn.cursor()
+            sql_query = """SELECT 
+                                DISTINCT Location,workshop, storage_area 
+                            FROM 
+                                object_dist
+                            ORDER BY 
+                                Location, workshop
+                        """
+            self.treeWidget_2.clear()
+            cursor.execute(sql_query)
+            results = cursor.fetchall()
+            parent_items = {}
+            for row in results:
+                category = row[0]
+                type_object = row[1]
+                obj = row[2]
+                if category in parent_items:
+                    parent_item = parent_items[category]
+                else:
+                    parent_item = QTreeWidgetItem(self.treeWidget_2, [category])
+                    parent_items[category] = parent_item
+                child_items = [parent_item.child(i) for i in range(parent_item.childCount())]
+                child_item = next((item for item in child_items if item.text(0) == type_object), None)
+                if child_item is None:
+                    child_item = QTreeWidgetItem(parent_item, [type_object])
+                QTreeWidgetItem(child_item, [obj])
+        except Exception as e:
+            print("Error while connecting to MySQL",e)
+
 
 class gcinobox(QDialog):
     def __init__(self, Box, query, type):
