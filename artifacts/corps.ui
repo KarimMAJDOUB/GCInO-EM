@@ -220,7 +220,7 @@ setColumnWidth(3, 200)
         <x>0</x>
         <y>0</y>
         <width>127</width>
-        <height>183</height>
+        <height>195</height>
        </rect>
       </property>
       <attribute name="icon">
@@ -282,7 +282,7 @@ setColumnWidth(3, 200)
         <x>0</x>
         <y>0</y>
         <width>127</width>
-        <height>183</height>
+        <height>195</height>
        </rect>
       </property>
       <attribute name="icon">

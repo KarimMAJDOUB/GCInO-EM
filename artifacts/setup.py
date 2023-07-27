@@ -71,8 +71,6 @@ class gcinotables(QMainWindow):
         self.tableWidget_2.setColumnHidden(4, True)
         self.btn = btn
         self.type = type
-        
-
         #Backend
         self.db = Database()
         config_object = ConfigParser()

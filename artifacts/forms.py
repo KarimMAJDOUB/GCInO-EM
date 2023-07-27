@@ -8,6 +8,7 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 import os
+import numpy as np
 from datetime import datetime
 import datetime as dt
 from docx import Document
@@ -153,18 +154,17 @@ class insertform(QDialog):
             query = "SELECT Object, Type_Object, location, CAST(Calibration as char), project_name, Category FROM object_dist"
             mycursor.execute(query)
             data = mycursor.fetchall()
-            for i in data:
-                if i == input_insert and actionText == "Adding":
+            if input_insert in data and actionText == "Adding":
                     query_update = "UPDATE object_dist SET Quantity= Quantity + %s WHERE Object = '%s'"  % (int(quantityText), objectText)
                     mycursor.execute(query_update)
                     conn.commit()
                     self.close()
-                elif i == input_insert and actionText == "Take Out":
+            elif input_insert in data and actionText == "Take Out":
                     query_update = "UPDATE object_dist SET Quantity= Quantity - %s WHERE Object = '%s'"  % (int(quantityText), objectText)
                     mycursor.execute(query_update)
                     conn.commit()
-                    self.close()
-                elif i == data[-1]:
+                    self.close() 
+            else:
                     now = datetime.now()
                     date_time = now.strftime("%Y-%m-%d %H:%M:%S")
                     conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
@@ -178,9 +178,7 @@ class insertform(QDialog):
                     mycursor.execute(query_insert)
                     conn.commit()
                     self.close()
-                else:
-                    pass
-                    
+                      
 class profileform(QDialog):
     def __init__(self):
         """Initializes an instance of the Ui_SignUp class.
@@ -295,8 +293,13 @@ class projectform(QDialog):
             else:
                 result[d] = a
         return result
-
-
+    
+    def addMissingElements(self, weeks_list, weeks_target, act_target):
+        for week in weeks_list:
+            if week not in weeks_target:
+                index = weeks_list.index(week)
+                weeks_target.insert(index, week)
+                act_target.insert(index, 0)
     def plotActivity(self):
         """
         """
@@ -319,6 +322,7 @@ class projectform(QDialog):
         for i in result.keys():
             weeks.append(i)
             activities.append(result[i])
+        
         #-------------------------------------------Take out activity--------------------------------------------#
         query_take = f"SELECT operation_datetime, Quantity FROM object_dist WHERE actions = 'Take Out' AND user_id='{self.LOGGED_USER_ID}' Order BY operation_datetime"
         cursor.execute(query_take)
@@ -335,13 +339,22 @@ class projectform(QDialog):
         for i in result_take.keys():
             weeks_take.append(i)
             activities_take.append(result_take[i])
+
+        self.addMissingElements(weeks, weeks_take, activities_take)
+        self.addMissingElements(weeks_take, weeks, activities)
+        self.addMissingElements(ss_aaaa_add, ss_aaaa_take, activ_take)
+        self.addMissingElements(ss_aaaa_take, ss_aaaa_add, activ_add)
+
+        unique_weeks = np.unique(weeks)
+        unique_ss_aaaa_add = np.unique(ss_aaaa_add)
         #-----------------------------------------------------Plotting-------------------------------------------------#    
         self.figure.clear()
         ax = self.figure.add_subplot(121)
         ax.plot(weeks, activities, 'o-', label='Adding action')
         ax.plot(weeks_take, activities_take, 'o-', label='Take out action')
+        ax.set_xticklabels(unique_weeks , rotation=45)
+        
         ax.set_title('Activity by SS-AAAA')
-        ax.set_xlabel('SS-AAAA')
         ax.set_ylabel('Quantity')
         ax.legend()
 
@@ -349,8 +362,8 @@ class projectform(QDialog):
         ax.scatter(ss_aaaa_add, activ_add, label='Adding action')
         ax.scatter(ss_aaaa_take, activ_take, label='Take out action')
         ax.set_title('Activity by SS-AAAA')
-        ax.set_xlabel('SS-AAAA')
         ax.set_ylabel('Quantity')
+        ax.set_xticklabels(unique_ss_aaaa_add , rotation=45)
         ax.legend() 
         self.canvas.draw()
 
@@ -531,8 +544,6 @@ class tendency(QDialog):
         self.graph_filename2 = os.path.dirname(os.path.dirname(__file__))+ r"\run\images\users.png"
         self.figure2.savefig(self.graph_filename2)
 
-             
-
     def plotObject(self, condition ="1=1"):
         conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                   database=self.db.DB_NAME)
@@ -598,6 +609,13 @@ class tendency(QDialog):
         self.graph_filename3 = os.path.dirname(os.path.dirname(__file__))+ "\\run\images\objects.png"
         self.figure3.savefig(self.graph_filename3)
 
+    def addMissingElements(self, weeks_list, weeks_target, act_target):
+        for week in weeks_list:
+            if week not in weeks_target:
+                index = weeks_list.index(week)
+                weeks_target.insert(index, week)
+                act_target.insert(index, 0)
+
     def plotQuantity(self, condition="1=1"):
         """
         """
@@ -635,7 +653,7 @@ class tendency(QDialog):
         for i in result.keys():
             weeks.append(i)
             activities.append(result[i])
-
+        
         #-------------------------------------------Take out activity--------------------------------------------#
         #query_take = f"SELECT operation_datetime, Quantity FROM object_dist WHERE actions = 'Take Out' order by operation_datetime"
         cursor.execute(query_take)
@@ -652,7 +670,10 @@ class tendency(QDialog):
         for i in result_take.keys():
             weeks_take.append(i)
             activities_take.append(result_take[i])
-
+        
+        self.addMissingElements(weeks, weeks_take, activities)
+        self.addMissingElements(weeks_take, weeks, activities_take)
+        unique_weeks = np.unique(weeks)
         ###################################Plotting
         if (condition == "1=1"):
             self.figure4.clear()
@@ -680,6 +701,7 @@ class tendency(QDialog):
                 horizontalalignment='center',
                 verticalalignment='top',
                 color = '#FE53BB')
+            ax.set_xticklabels(unique_weeks , rotation=20)
             self.canvas4.draw()
 
         elif (condition == "2=2"):
@@ -709,6 +731,7 @@ class tendency(QDialog):
                 horizontalalignment='center',
                 verticalalignment='top',
                 color = '#FE53BB')
+            ax.set_xticklabels(unique_weeks , rotation=20)
             self.canvas4.draw()
         else:
             self.figure4.clear()
@@ -737,6 +760,7 @@ class tendency(QDialog):
                 horizontalalignment='center',
                 verticalalignment='top',
                 color = '#FE53BB')
+            ax.set_xticklabels(unique_weeks , rotation=10)
             self.canvas4.draw()
         # Save the bar chart as an image file
         self.graph_filename4 = os.path.dirname(os.path.dirname(__file__))+ "\\run\images\quantity.png"
@@ -765,10 +789,7 @@ class tendency(QDialog):
             self.plotObject(condition = "2=2"), self.plotQuantity(condition = "2=2")
         else:
             return self.plotObject(condition="3=3"), self.plotQuantity(condition = "3=3")
-    
-    """def onComboBoxChanged(self, value):
-        return value"""
-
+        
     def loadBox(self, box, type="project"):
         conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                    database=self.db.DB_NAME)
@@ -943,7 +964,7 @@ class tendency(QDialog):
         except Exception as e:
             QMessageBox.about(self, "Error", "error : "+ str(e))       
 
-class modifyform(insertform):
+class modifyform(insertform, QDialog):
     def __init__(self,table_widget):
         super().__init__()
         self.table_widget = table_widget

@@ -17,13 +17,10 @@ from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
 
-from setup import gcinotables
-
 class eventshandler(QDialog):
     def __init__(self):
         """
         """
-        self.openModify()
 
     def openInsertionForm(self):
         """
@@ -44,19 +41,6 @@ class eventshandler(QDialog):
         """
         """
         tendency().exec()
-
-    def openModify(self):
-        """
-        """
-        ui_ = loadUi("corps.ui")
-        table = ui_.tableWidget
-        table2 = ui_.tableWidget_2
-        btn = ui_.export_csv_btn
-        type='one'
-        table_fin = gcinotables(table, table2, btn, type).loadData()[0]
-        modify_dialog = modifyform(table_fin)
-        table.cellClicked.connect(modify_dialog.init_ui)
-        #modify_dialog.exec()
 
 class filterevents(QDialog):
     def __init__(self, Box, table, table2, col_name, treeWidget, treeWidget_2, search, type):
@@ -257,6 +241,7 @@ class filterevents(QDialog):
 
     def resetTable(self):
         # Clear any selection in the tree view
+        self.tree_widget2.setVisible(False)
         self.tree_widget.clearSelection()
 
         # Reset the table with initial data
