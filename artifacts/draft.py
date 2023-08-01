@@ -1,120 +1,71 @@
-import mysql.connector
-from PyQt6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QTreeView, QTableWidget, QTableWidgetItem, QPushButton
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
+from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, QVBoxLayout, QLabel, QWidget
+import sys
+import os 
+from PyQt6.uic import loadUi
 
 
-class WidgetExample(QMainWindow):
-    def __init__(self):
+import os
+import sys
+from PyQt6.QtWidgets import QMainWindow
+from PyQt6.QtWidgets import QApplication, QDialog
+from PyQt6.uic import loadUi
+from setup import gcinodesign, gcinotree, gcinotables, gcinobox
+from events import eventshandler, filterevents
+from forms import modifyform
+
+
+class MyWidget(QDialog):
+    def __init__(self,table_widget):
         super().__init__()
+        self.table_widget = table_widget
+        self.table_widget.cellClicked.connect(self.on_cell_clicked)
+        self.uim = loadUi(os.path.join(os.path.dirname(__file__), "modify.ui"), self)
 
-        self.table = QTableWidget()
-        self.tree_view = QTreeView()
-        self.reset_button = QPushButton("Reset")
+    def on_cell_clicked(self, row, col):
+        # Récupérer les éléments (items) de la ligne cliquée
+        items = []
+        for col in range(self.table_widget.columnCount()):
+            item = self.table_widget.item(row, col)
+            items.append(item)
+        print(items)
+        self.uim.objectText.setText(items[0].text())
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.table)
-        layout.addWidget(self.tree_view)
-        layout.addWidget(self.reset_button)
-
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
-
-        # Initialize the QStandardItemModel
-        self.model = QStandardItemModel()
-        self.tree_view.setModel(self.model)
-
-        # Connect the tree view's item selection signal to the slot
-        self.tree_view.selectionModel().selectionChanged.connect(self.handle_item_selection)
-
-        self.reset_button.clicked.connect(self.reset)
-
-        # Populate the tree view
-        self.populate_tree()
-
-        # Connect to MySQL database
-        self.db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="Krayem99882056&&&",
-            database="fakegcino"
-        )
-
-        # Populate the initial table data
-        initial_data = [
-            ["Data 1", "Data 2", "Data 3"],
-            ["Data 4", "Data 5", "Data 6"],
-            ["Data 7", "Data 8", "Data 9"]
-        ]
-        self.populate_table(initial_data)
-
-    def populate_tree(self):
-        # Example tree data
-        data = {
-            'Category 1': ['Item 1', 'Item 2'],
-            'Category 2': ['Item 3', 'Item 4'],
-            'Category 3': ['Item 5', 'Item 6']
-        }
-
-        # Clear any existing data in the model
-        self.model.clear()
-
-        # Create the root item
-        root = self.model.invisibleRootItem()
-
-        # Populate the tree view
-        for category, items in data.items():
-            category_item = QStandardItem(category)
-            root.appendRow(category_item)
-            for item in items:
-                item_item = QStandardItem(item)
-                category_item.appendRow(item_item)
-
-    def populate_table(self, data):
-        self.table.clearContents()
-        self.table.setRowCount(len(data))
-        self.table.setColumnCount(len(data[0]))
-
-        for row in range(len(data)):
-            for col in range(len(data[0])):
-                item = QTableWidgetItem(data[row][col])
-                self.table.setItem(row, col, item)
-
-    def handle_item_selection(self, selected, deselected):
-        selected_indexes = selected.indexes()
-        if selected_indexes:
-            selected_item = selected_indexes[0].data()
-            # Update the table based on the selected item
-            if selected_item == 'Item 1':
-                query = "SELECT Object, Type_Object, Location FROM object_dist WHERE Type_Object='Consumable'"
-            elif selected_item == 'Item 2':
-                query = "SELECT Object, Type_Object, Location FROM object_dist WHERE Type_object='Tooling'"
-            elif selected_item == 'Item 3':
-                query = "SELECT Object, Type_Object, Location FROM object_dist WHERE Object='iPhone'"
-            else:
-                query = ""
-
-            if query:
-                cursor = self.db.cursor()
-                cursor.execute(query)
-                result = cursor.fetchall()
-                self.populate_table(result)
-
-    def reset(self):
-        # Clear any selection in the tree view
-        self.tree_view.clearSelection()
-
-        # Reset the table with initial data
-        initial_data = [
-            ["Data 1", "Data 2", "Data 3"],
-            ["Data 4", "Data 5", "Data 6"],
-            ["Data 7", "Data 8", "Data 9"]
-        ]
-        self.populate_table(initial_data)
-
+class gcinocorps(QDialog):
+    def __init__(self):
+        super(gcinocorps, self).__init__()
+        self.ui = loadUi(os.path.join(os.path.dirname(__file__), "corps.ui"), self)
+        self.query_list =[f"SELECT DISTINCT projectname FROM projects", f"SELECT DISTINCT CONCAT(firstName , ' ' , lastname) FROM managers",
+                          f"SELECT operation_datetime FROM object_dist", f"SELECT Distinct actions FROM object_dist", f"SELECT DISTINCT Type_object FROM object_dist"
+                        ]
+        self.Box_list = [self.ui.Why_Box, self.ui.Who_Box, self.ui.date_Box, self.ui.action_box, self.ui.What_Box]
+        self.col_list = ["project_name", "name", "operation_datetime", "actions", "Type_object" ]
+        
+        self.gcino_window = gcinodesign(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.tab_3)
+        self.gcino_tree = gcinotree(self.ui.treeWidget, self.ui.treeWidget_2)
+        self.gcino_table = gcinotables(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.export_csv_btn, self.ui.What_Box)
+        for i in range(len(self.query_list)-1):
+            self.Box = gcinobox(self.Box_list[i], self.query_list[i], type="all")
+        self.Box = gcinobox(self.Box_list[len(self.query_list)-1], self.query_list[len(self.query_list)-1], type="one")
+        
+        self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget,self.col_list, self.ui.treeWidget,self.ui.treeWidget_2, self.ui.search, type='all')
+        
+        self.returnForms()
+          
+    def returnForms(self):
+        self.ui.insertDataButton.clicked.connect(eventshandler.openInsertionForm)
+        self.ui.profileButton.clicked.connect(eventshandler.openProfileForm)
+        self.ui.projectButton.clicked.connect(eventshandler.openProjForm)
+        self.ui.btn_plot_act.clicked.connect(eventshandler.openPlotForm)
+        self.ui.tableWidget.cellClicked.connect(MyWidget(self.ui.tableWidget).exec)
+        self.ui.treeWidget.clicked.connect(self.filter.filterTree)
+        self.ui.treeWidget_2.clicked.connect(self.filter.filterLocationTree)
+        
+        for combo_box in self.Box_list:
+            combo_box.currentIndexChanged.connect(self.filter.filterBox)
+        self.ui.reset_btn.clicked.connect(self.filter.resetTable)
 
 if __name__ == "__main__":
-    app = QApplication([])
-    window = WidgetExample()
+    app = QApplication(sys.argv)
+    window = gcinocorps()
     window.show()
-    app.exec()
+    sys.exit(app.exec())

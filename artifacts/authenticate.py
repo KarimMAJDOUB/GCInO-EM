@@ -61,7 +61,7 @@ class login(QDialog):
                 conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                        database=self.db.DB_NAME)
                 cursor = conn.cursor()
-                query = f"SELECT id, email, password, username FROM managers WHERE email='{user}' and password='{pwd}'"
+                query = f"SELECT id,role email, password, username FROM managers WHERE email='{user}' and password='{pwd}'"
                 cursor.execute(query)
                 data = cursor.fetchone()
                 if len(data) > 0:
@@ -69,6 +69,7 @@ class login(QDialog):
                     config_object.read("config.ini")
                     userinfo = config_object["USERINFO"]
                     userinfo["LOGGED_USER_ID"] = str(data[0])
+                    userinfo["LOGGED_USER_role"] = str(data[1])
                     with open('config.ini', 'w') as conf:
                         config_object.write(conf)
 
@@ -221,7 +222,6 @@ class forgetpassword(QDialog):
         """
         super(forgetpassword, self).__init__()
         self.ui = loadUi(os.path.join(os.path.dirname(__file__), "password.ui"), self)
-        print(os.path.join(os.path.dirname(__file__), "password.ui"))
         self.ui.pushButton.clicked.connect(self.resetPassword)
         self.ui.pushButton_2.clicked.connect(self.goback)
 
@@ -296,13 +296,13 @@ class forgetpassword(QDialog):
                             self.error.setStyleSheet("color:green")
             else:
                 self.error.setText("Passwords don't match")
+
 if __name__ =="__main__":
     app = QApplication([])
     welcome= login()
     widget = QStackedWidget()
     width = widget.frameGeometry().width()
     height = widget.frameGeometry().height()
-    
     widget.addWidget(welcome)
     widget.showMaximized()
     try:

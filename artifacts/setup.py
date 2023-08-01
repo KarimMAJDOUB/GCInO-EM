@@ -9,16 +9,32 @@
 ################################################################################
 import os
 from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog, QFileDialog
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
+import csv 
+from datetime import datetime
 
 class gcinodesign(QDialog):
-    def __init__(self, table, table2):
+    def __init__(self, table, table2, tab):
+        """
+        """
+        super(gcinodesign, self).__init__()
         self.table = table
         self.table2 = table2
+        self.tab = tab
+        #Backend
+        self.db = Database()
+        config_object = ConfigParser()
+        self.path_to_config = os.path.dirname(os.path.dirname(__file__)) + "\system_files\config.ini"
+        config_object.read("config.ini")
+        userInfo = config_object["USERINFO"]
+        self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
+        self.LOGGED_USER_ROLE = userInfo["LOGGED_USER_ROLE"]
+
         self.designTables()
+        self.disableTab(self.tab)
 
     def designTables(self):
         cols=["Object","Type","Location","Calibration","Quantity", "Category"]
@@ -32,19 +48,33 @@ class gcinodesign(QDialog):
             self.table2.setColumnWidth(i,150)
         self.table2.setHorizontalHeaderLabels(cols_hist)
 
+    
+    def disableTab(self, widget):
+        """
+        """
+        if self.LOGGED_USER_ROLE == "user":
+            for child_widget in widget.findChildren(QWidget):
+                child_widget.setVisible(False)
+        else:
+            for child_widget in widget.findChildren(QWidget):
+                child_widget.setVisible(True)
+
+
+
 class gcinotables(QMainWindow):
-    def __init__(self, tableWidget, tableWidget2):
+    def __init__(self, tableWidget, tableWidget2, btn, type):
         """
         """
         super(gcinotables, self).__init__()
         self.tableWidget = tableWidget
         self.tableWidget_2 = tableWidget2
-
+        self.tableWidget_2.setColumnHidden(4, True)
+        self.btn = btn
+        self.type = type
         #Backend
         self.db = Database()
         config_object = ConfigParser()
-        self.path_to_config = os.path.dirname(os.path.dirname(__file__)) + "\system_files\config.ini"
-        config_object.read(self.path_to_config)
+        config_object.read("config.ini")
         userInfo = config_object["USERINFO"]
         self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
         
@@ -53,13 +83,14 @@ class gcinotables(QMainWindow):
         self.timer.timeout.connect(self.loadData)
         self.timer.start(1000)"""
         self.loadData()
+        self.btn.clicked.connect(self.exportCSV)
 
     def loadData(self):
         """This function loads data from an SQL database in the "Corps" user interface.
         Usage:
         -----------
-            ui = Ui_Corps()s
-            ui.load_data_from_SQL()
+            ui = Ui_Corps()
+            ui.loadData()
         Return:
         -----------
             None
@@ -104,6 +135,8 @@ class gcinotables(QMainWindow):
                                 fakegcino.managers as m
                             ON
                                 m.id = o.user_id
+                            WHERE
+                                o.Type_object="Consumable"
                                 
                         """
             cursor2.execute(sql_query2)
@@ -125,12 +158,51 @@ class gcinotables(QMainWindow):
         except Exception as e:
             print("Error while connecting to MySQL",e)
 
+        return self.tableWidget, self.tableWidget_2
+
+    def exportCSV(self):
+        now = datetime.now()
+        date_time = now.strftime("%Y_%m_%d")
+        conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                database=self.db.DB_NAME)
+        mycursor = conn.cursor()
+        query = f"SELECT name FROM managers WHERE id = {self.LOGGED_USER_ID}"
+        mycursor.execute(query)
+        data = mycursor.fetchone()
+        name = data[0]
+
+        file_path = os.path.dirname(os.path.dirname(__file__)) + '/run/tendency' + '/' + str(date_time) + '_tendency_'+ name+ '.csv' 
+        file_path = file_path.replace('\\', '/')
+        file_path = os.path.normpath(file_path)
+
+        if file_path:
+            try:
+                with open(file_path, mode="w", newline="") as file:
+                    writer = csv.writer(file)
+                    for row in range(self.tableWidget_2.rowCount()):
+                        row_data = []
+                        for column in range(self.tableWidget_2.columnCount()):
+                            item = self.tableWidget_2.item(row, column)
+                            if item is not None:
+                                row_data.append(item.text())
+                            else:
+                                row_data.append("")
+                        writer.writerow(row_data)
+
+                QMessageBox.information(self, "CSV Exported", f"CSV file has been exported to:\n{file_path}")
+            except IOError:
+                QMessageBox.critical(self, "Error", "An error occurred while exporting the CSV file.")
+        else:
+            QMessageBox.warning(self, "Warning", "No file selected for export.")
+            
 class gcinotree(QDialog):
-    def __init__(self, treeWidget):
+    def __init__(self, treeWidget, treeWidget_2):
         """
         """
         super(gcinotree, self).__init__()
         self.treeWidget = treeWidget
+        self.treeWidget_2 = treeWidget_2
+        self.treeWidget_2.hide()
         #Backend
         self.db = Database()
         config_object = ConfigParser()
@@ -139,6 +211,7 @@ class gcinotree(QDialog):
         userInfo = config_object["USERINFO"]
         self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
         self.groupTreeItems()
+        self.groupTreeLocationItems()
 
     def groupTreeItems(self):
         """
@@ -151,43 +224,74 @@ class gcinotree(QDialog):
                                 DISTINCT Category,Type_object, Object 
                             FROM 
                                 object_dist
+                            ORDER BY 
+                                Category, Type_object
                         """
             self.treeWidget.clear()
             cursor.execute(sql_query)
             results = cursor.fetchall()
             parent_items = {}
-
             for row in results:
                 category = row[0]
                 type_object = row[1]
                 obj = row[2]
-
                 if category in parent_items:
                     parent_item = parent_items[category]
                 else:
                     parent_item = QTreeWidgetItem(self.treeWidget, [category])
                     parent_items[category] = parent_item
-
                 child_items = [parent_item.child(i) for i in range(parent_item.childCount())]
                 child_item = next((item for item in child_items if item.text(0) == type_object), None)
-
                 if child_item is None:
                     child_item = QTreeWidgetItem(parent_item, [type_object])
-
                 QTreeWidgetItem(child_item, [obj])
-
         except Exception as e:
             print("Error while connecting to MySQL",e)
 
-class gcinobox(QDialog):
-    def __init__(self, Box, query):
+    def groupTreeLocationItems(self):
         """
-        
+        """
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                   database=self.db.DB_NAME)
+            cursor = conn.cursor()
+            sql_query = """SELECT 
+                                DISTINCT Location,workshop, storage_area 
+                            FROM 
+                                object_dist
+                            ORDER BY 
+                                Location, workshop
+                        """
+            self.treeWidget_2.clear()
+            cursor.execute(sql_query)
+            results = cursor.fetchall()
+            parent_items = {}
+            for row in results:
+                category = row[0]
+                type_object = row[1]
+                obj = row[2]
+                if category in parent_items:
+                    parent_item = parent_items[category]
+                else:
+                    parent_item = QTreeWidgetItem(self.treeWidget_2, [category])
+                    parent_items[category] = parent_item
+                child_items = [parent_item.child(i) for i in range(parent_item.childCount())]
+                child_item = next((item for item in child_items if item.text(0) == type_object), None)
+                if child_item is None:
+                    child_item = QTreeWidgetItem(parent_item, [type_object])
+                QTreeWidgetItem(child_item, [obj])
+        except Exception as e:
+            print("Error while connecting to MySQL",e)
+
+
+class gcinobox(QDialog):
+    def __init__(self, Box, query, type):
+        """
         """
         super(gcinobox, self).__init__()
         self.Box = Box
         self.query = query
-        self.ui = loadUi(os.path.join(os.path.dirname(__file__), "corps.ui"), self)
+        self.type = type
 
         self.db = Database()
         config_object = ConfigParser()
@@ -199,14 +303,16 @@ class gcinobox(QDialog):
 
     def loadBox(self):
         """
-        
         """
         conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                    database=self.db.DB_NAME)
         cursor = conn.cursor()
         cursor.execute(self.query)
         data = cursor.fetchall()
-        self.Box.addItem("All")
+        if (self.type == "all"):
+            self.Box.addItem("All")
+        else:
+            pass
         for i in data :
             var = str(i[0])
             self.Box.addItem(var)
