@@ -9,7 +9,7 @@
 ################################################################################
 import os
 from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog, QFileDialog
+from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog, QCalendarWidget
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
@@ -17,13 +17,17 @@ import csv
 from datetime import datetime
 
 class gcinodesign(QDialog):
-    def __init__(self, table, table2, tab):
+    def __init__(self, table, table2, tab, calendar_label, calendar):
         """
         """
         super(gcinodesign, self).__init__()
         self.table = table
         self.table2 = table2
         self.tab = tab
+        self.calendar_label = calendar_label
+        self.calendar = calendar
+        self.calendar.setVisible(False)
+
         #Backend
         self.db = Database()
         config_object = ConfigParser()
@@ -35,6 +39,7 @@ class gcinodesign(QDialog):
 
         self.designTables()
         self.disableTab(self.tab)
+        self.designCalendar()
 
     def designTables(self):
         cols=["Object","Type","Location","Calibration","Quantity", "Category"]
@@ -58,6 +63,17 @@ class gcinodesign(QDialog):
         else:
             for child_widget in widget.findChildren(QWidget):
                 child_widget.setVisible(True)
+    
+    def designCalendar(self):
+        """
+        """
+        self.calendar_label.mousePressEvent = self.toggleCalendar
+    
+    def toggleCalendar(self, event):
+        """
+        """
+        self.calendar.setVisible(not self.calendar.isVisible())
+        event.accept() 
 
 
 

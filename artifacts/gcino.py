@@ -10,7 +10,7 @@
 import os
 import sys
 from PyQt6.QtWidgets import QMainWindow
-from PyQt6.QtWidgets import QApplication, QDialog
+from PyQt6.QtWidgets import QApplication
 from PyQt6.uic import loadUi
 from setup import gcinodesign, gcinotree, gcinotables, gcinobox
 from events import eventshandler, filterevents
@@ -25,17 +25,17 @@ class gcinocorps(QMainWindow):
                           f"SELECT DISTINCT Type_object FROM historique ORDER BY Type_object"
                         ]
         self.Box_list = [self.ui.Why_Box, self.ui.Who_Box, self.ui.date_Box, self.ui.action_box, self.ui.What_Box]
-        self.col_list = ["project_name", "name", "operation_datetime", "actions", "Type_object" ]
+        self.col_list = ["project_name", "name", "operation_datetime", "actions", "Type_object"]
         self.modify_form = modifyform(self.ui.tableWidget)
         
-        self.gcino_window = gcinodesign(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.tab_3)
+        self.gcino_window = gcinodesign(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.tab_3, self.ui.calendar_label, self.ui.calendar)
         self.gcino_tree = gcinotree(self.ui.treeWidget, self.ui.treeWidget_2)
         self.gcino_table = gcinotables(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.export_csv_btn, self.ui.What_Box)
         for i in range(len(self.query_list)-1):
             self.Box = gcinobox(self.Box_list[i], self.query_list[i], type="all")
         self.Box = gcinobox(self.Box_list[len(self.query_list)-1], self.query_list[len(self.query_list)-1], type="one")
         
-        self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget, self.col_list, self.ui.treeWidget,self.ui.treeWidget_2, self.ui.search, type='all')
+        self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget, self.col_list, self.ui.treeWidget,self.ui.treeWidget_2, self.ui.search, self.ui.calendar, type='all')
         self.ui.tableWidget.cellClicked.connect(self.openModifyForm)
         self.returnForms()
 
@@ -51,7 +51,7 @@ class gcinocorps(QMainWindow):
         self.ui.btn_plot_act.clicked.connect(eventshandler.openPlotForm)
         self.ui.treeWidget.clicked.connect(self.filter.filterTree)
         self.ui.treeWidget_2.clicked.connect(self.filter.filterLocationTree)
-        
+        self.ui.calendar.selectionChanged.connect(self.filter.filterCalendar)
         for combo_box in self.Box_list:
             combo_box.currentIndexChanged.connect(self.filter.filterBox)
         self.ui.reset_btn.clicked.connect(self.filter.resetTable)

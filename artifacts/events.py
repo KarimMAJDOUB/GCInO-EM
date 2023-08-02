@@ -9,14 +9,14 @@
 ################################################################################
 import os
 from forms import insertform, profileform, tendency, projectform, modifyform
-from PyQt6.QtWidgets import QDialog, QTableWidget, QTableWidgetItem, QMessageBox, QComboBox, QPushButton
+from PyQt6.QtWidgets import QDialog, QTableWidgetItem, QMessageBox, QComboBox, QPushButton, QWidget, QLabel
 import sys
 from PyQt6.uic import loadUi
 
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
-from setup import gcinotree, gcinotables
+from setup import gcinotree, gcinotables, gcinodesign
 
 class eventshandler(QDialog):
     def __init__(self):
@@ -44,7 +44,7 @@ class eventshandler(QDialog):
         tendency().exec()
 
 class filterevents(QDialog):
-    def __init__(self, Box, table, table2, col_name, treeWidget, treeWidget_2, search, type):
+    def __init__(self, Box, table, table2, col_name, treeWidget, treeWidget_2, search, calendar, type):
         """
         """
         super(filterevents, self).__init__()
@@ -58,7 +58,11 @@ class filterevents(QDialog):
         self.search = search
         self.search.setPlaceholderText("Search...")
         self.type = type
-        
+        self.calendar = calendar
+        self.calendar.setVisible(False)
+        self.start_date = None
+        self.end_date = None
+
         self.db = Database()
         config_object = ConfigParser()
         self.path_to_config = os.path.dirname(os.path.dirname(__file__)) + "\system_files\config.ini"
@@ -97,8 +101,35 @@ class filterevents(QDialog):
                     WHERE 
                         1=1"""
         for filter_name, filter_value in filters.items():
-                query += f" AND {filter_name} = '{filter_value}'"
-
+            query += f" AND {filter_name} = '{filter_value}'"
+            
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            self.table.setRowCount(len(result))
+            for row_idx, row in enumerate(result):
+                for col_idx, col_value in enumerate(row):
+                    item = QTableWidgetItem(str(col_value))
+                    self.table.setItem(row_idx, col_idx, item)
+        return query
+    
+    def filterCalendar(self, from_box=False):
+        query = self.filterBox()
+        selected_date = self.calendar.selectedDate()
+        if not self.start_date:
+            self.start_date = selected_date
+            query += f" AND date(operation_datetime) = '{selected_date.toString('yyyy-MM-dd')}'"
+            
+        elif not self.end_date:
+            self.end_date = selected_date
+            query += f" AND date(operation_datetime) >= '{self.start_date.toString('yyyy-MM-dd')}' AND date(operation_datetime) <= '{selected_date.toString('yyyy-MM-dd')}'"
+        else:
+            self.start_date = selected_date
+            self.end_date = None
+            query += f" AND date(operation_datetime) = '{selected_date.toString('yyyy-MM-dd')}'"
+        conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                        database=self.db.DB_NAME)
+        
         with conn.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
