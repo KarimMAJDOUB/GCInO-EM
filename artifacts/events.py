@@ -102,7 +102,7 @@ class filterevents(QDialog):
                         1=1"""
         for filter_name, filter_value in filters.items():
             query += f" AND {filter_name} = '{filter_value}'"
-            
+
         with conn.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
@@ -274,21 +274,6 @@ class filterevents(QDialog):
         # Clear any selection in the tree view
         self.tree_widget2.setVisible(False)
         self.tree_widget.clearSelection()
-
-        # Reset the table with initial data
-        conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
-                                   database=self.db.DB_NAME)
-        cursor = conn.cursor()
-        sql_query = """SELECT 
-                            Object, Type_object, Location, CAST(Calibration as char), CAST(Quantity as char), Category
-                        FROM 
-                            fakegcino.object_dist
-                        """
-        cursor.execute(sql_query)
-        myresult = cursor.fetchall()
-        initial_data = list(myresult)
-        self.populateTable(initial_data)
-
         mod_tree = gcinotree(self.tree_widget, self.tree_widget2)
         btn = QPushButton()
         box = QComboBox()

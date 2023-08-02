@@ -120,8 +120,8 @@ class gcinotables(QMainWindow):
                             Object, Type_object, Location, CAST(Calibration as char), CAST(Quantity as char), Category
                         FROM 
                             fakegcino.object_dist
-                        ORDER BY
-                            Object
+                        WHERE 
+                            Quantity != 0
                         """
             cursor.execute(sql_query)
             myresult = cursor.fetchall()
