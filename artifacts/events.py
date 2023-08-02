@@ -55,7 +55,6 @@ class filterevents(QDialog):
         self.tree_widget2 = treeWidget_2
         self.table2 = table2
         self.table2.setColumnHidden(5, True)
-        self.Box[3].setEnabled(False)
         self.search = search
         self.search.setPlaceholderText("Search...")
         self.type = type
@@ -78,10 +77,10 @@ class filterevents(QDialog):
             if filter_option != "All":
                 filters[self.col_name[i]] = filter_option
             if filter_option == "Consumable":
-                self.table.setColumnHidden(4, True)
-                self.Box[3].setEnabled(False)
+                #self.table.setColumnHidden(4, False)
+                self.Box[3].setEnabled(True)
             elif filter_option == "Tooling":
-                self.table.setColumnHidden(4, False)
+                #self.table.setColumnHidden(4, False)
                 self.Box[3].setEnabled(True)
 
         conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
@@ -90,7 +89,7 @@ class filterevents(QDialog):
                         o.Object, o.Type_object, o.Location, CAST(o.Calibration as char),actions, CAST(o.Quantity as char), m.name,
                         CAST(o.operation_datetime as char), o.project_name
                     FROM 
-                        fakegcino.object_dist as o
+                        fakegcino.historique as o
                     INNER JOIN
                         fakegcino.managers as m
                     ON

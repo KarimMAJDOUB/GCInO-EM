@@ -67,7 +67,7 @@ class insertform(QDialog):
     def loadBox(self):
         """
         """
-        self.ui.TypeBox.currentTextChanged.connect(self.onBoxTextChanged)
+        self.TypeBox.currentTextChanged.connect(self.onBoxTextChanged)
         # Add list of project in comboBox
         conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                    database=self.db.DB_NAME)
@@ -99,9 +99,9 @@ class insertform(QDialog):
         data_type = cursor.fetchall()
         for i in data_type : 
             res = i[0]
-            self.ui.TypeBox.addItem(res)
+            self.TypeBox.addItem(res)
 
-        if data_role[0] == "user" and self.ui.TypeBox.currentText() == "Consumable":
+        if data_role[0] == "user" and self.TypeBox.currentText() == "Consumable":
             self.actionBox.setEnabled(False)
 
         cursor3 = conn.cursor()
@@ -153,17 +153,8 @@ class insertform(QDialog):
             mycursor.execute(query)
             data = mycursor.fetchall()
             if input_insert in data and actionText == "Adding":
-                    #UPDATE INST TABLE
                     query_update = "UPDATE object_dist SET Quantity= Quantity + %s WHERE Object = '%s' AND Type_Object='%s' AND Location ='%s' AND Calibration =%s AND project_name ='%s' "  % (int(quantityText), objectText, typeText, locationText, int(calibrationText), projectText)
                     mycursor.execute(query_update)
-                    conn.commit()
-                    self.close()
-                    
-                    #INSERT INTO HISTORIQUE TABLE
-                    now = datetime.now()
-                    date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-                    query_insert = "INSERT INTO historique(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, actionText, projectText)
-                    mycursor.execute(query_insert)
                     conn.commit()
                     self.close()
             elif input_insert in data and actionText == "Take Out":
@@ -171,14 +162,6 @@ class insertform(QDialog):
                     mycursor.execute(query_update)
                     conn.commit()
                     self.close() 
-
-                    #INSERT INTO HISTORIQUE TABLE
-                    now = datetime.now()
-                    date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-                    query_insert = "INSERT INTO historique(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, actionText, projectText)
-                    mycursor.execute(query_insert)
-                    conn.commit()
-                    self.close()
             else:
                     now = datetime.now()
                     date_time = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -189,15 +172,8 @@ class insertform(QDialog):
                     mycursor.execute(query)
                     data = mycursor.fetchall()
 
-                    #INSERT INTO INST TABLE
                     query_insert = "INSERT INTO object_dist(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, actionText, projectText)
                     mycursor.execute(query_insert)
-                    conn.commit()
-                    self.close()
-
-                    #INSERT INTO HISTORIQUE TABLE
-                    query_insert_hist = "INSERT INTO historique(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, actionText, projectText)
-                    mycursor.execute(query_insert_hist)
                     conn.commit()
                     self.close()
                       
@@ -964,7 +940,7 @@ class modifyform(insertform, QDialog):
         quantityText    = str(self.uim.quantityText.text())
         projectText     = str(self.uim.projectBox.currentText())
         categoryText    = str(self.uim.categoryBox.currentText())
-        #coutText        = str(self.uim.coutText.text())
+        #coutText       = str(self.uim.coutText.text())
         
         old_object = self.items[0].text()
         old_type = self.items[1].text()
@@ -986,7 +962,7 @@ class modifyform(insertform, QDialog):
                                 database=self.db.DB_NAME)
             mycursor = conn.cursor()
             if int(quantityText) == 0:
-                query_delete ="DELETE FROM object_dist where Object= '%s' AND Type_object='%s' AND Location='%s' AND Calibration=%s AND Category='%s'" % (objectText,typeText, locationText, int(calibrationText), categoryText)
+                query_delete ="DELETE FROM object_dist where Object= '%s'"%(objectText)
                 mycursor.execute(query_delete)
                 conn.commit()
                 self.close()
@@ -995,12 +971,5 @@ class modifyform(insertform, QDialog):
             else: 
                 query_update = "UPDATE object_dist SET Object= '%s', Type_object='%s', Location='%s', Calibration='%s', Quantity='%s', Category='%s' WHERE Object = '%s' AND Type_object='%s' AND Location='%s' AND Calibration='%s' AND Quantity='%s' AND Category='%s'" % (objectText,typeText, locationText, calibrationText, quantityText, categoryText, old_object, old_type, old_location, old_calibration, old_quantity, old_category)
                 mycursor.execute(query_update)
-                conn.commit()
-                self.close()
-
-                now = datetime.now()
-                date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-                query_insert = "INSERT INTO historique(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, "Changing", projectText)
-                mycursor.execute(query_insert)
                 conn.commit()
                 self.close()

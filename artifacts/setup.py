@@ -68,7 +68,7 @@ class gcinotables(QMainWindow):
         super(gcinotables, self).__init__()
         self.tableWidget = tableWidget
         self.tableWidget_2 = tableWidget2
-        self.tableWidget_2.setColumnHidden(4, True)
+        #self.tableWidget_2.setColumnHidden(4, True)
         self.btn = btn
         self.type = type
         #Backend
@@ -104,6 +104,8 @@ class gcinotables(QMainWindow):
                             Object, Type_object, Location, CAST(Calibration as char), CAST(Quantity as char), Category
                         FROM 
                             fakegcino.object_dist
+                        ORDER BY
+                            Object
                         """
             cursor.execute(sql_query)
             myresult = cursor.fetchall()
@@ -127,14 +129,13 @@ class gcinotables(QMainWindow):
                                 o.Object, o.Type_object, o.Location, CAST(o.Calibration as char),actions, CAST(o.Quantity as char), CONCAT_WS(" ", m.firstname, m.lastname),
                                 CAST(o.operation_datetime as char), o.project_name
                             FROM 
-                                fakegcino.object_dist as o
+                                fakegcino.historique as o
                             INNER JOIN
                                 fakegcino.managers as m
                             ON
                                 m.id = o.user_id
                             WHERE
-                                o.Type_object="Consumable"
-                                
+                                o.Type_object="Consumable"  
                         """
             cursor2.execute(sql_query2)
             myresult2 = cursor2.fetchall()
