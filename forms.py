@@ -161,7 +161,7 @@ class insertform(QDialog):
                     query_update = "UPDATE object_dist SET Quantity= Quantity - %s WHERE Object = '%s' AND Type_Object='%s' AND Location ='%s' AND Calibration =%s AND project_name ='%s' "  % (int(quantityText), objectText, typeText, locationText, int(calibrationText), projectText)
                     mycursor.execute(query_update)
                     conn.commit()
-                    self.close() 
+                    self.close()
             else:
                     now = datetime.now()
                     date_time = now.strftime("%Y-%m-%d %H:%M:%S")

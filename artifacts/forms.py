@@ -169,6 +169,8 @@ class insertform(QDialog):
             elif input_insert in data and actionText == "Take Out":
                     query_update = "UPDATE object_dist SET Quantity= Quantity - %s WHERE Object = '%s' AND Type_Object='%s' AND Location ='%s' AND Calibration =%s AND project_name ='%s' "  % (int(quantityText), objectText, typeText, locationText, int(calibrationText), projectText)
                     mycursor.execute(query_update)
+                    query_delete = "DELETE FROM object_dist WHERE Quantity =0"
+                    mycursor.execute(query_delete)
                     conn.commit()
                     self.close() 
 

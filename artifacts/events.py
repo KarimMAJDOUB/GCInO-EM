@@ -9,14 +9,12 @@
 ################################################################################
 import os
 from forms import insertform, profileform, tendency, projectform, modifyform
-from PyQt6.QtWidgets import QDialog, QTableWidgetItem, QMessageBox, QComboBox, QPushButton, QWidget, QLabel
-import sys
-from PyQt6.uic import loadUi
+from PyQt6.QtWidgets import QDialog, QTableWidgetItem, QMessageBox, QComboBox, QPushButton
 
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
-from setup import gcinotree, gcinotables, gcinodesign
+from setup import gcinotree, gcinotables
 
 class eventshandler(QDialog):
     def __init__(self):
@@ -268,7 +266,6 @@ class filterevents(QDialog):
             parent_item = parent_item.parent()
             self.tree_widget.expandAll()
             self.tree_widget2.expandAll()
-
 
     def resetTable(self):
         # Clear any selection in the tree view
