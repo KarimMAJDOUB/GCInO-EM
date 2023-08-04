@@ -9,7 +9,7 @@
 ################################################################################
 import os
 import sys
-from PyQt6.QtWidgets import QMainWindow, QMessageBox, QApplication
+from PyQt6.QtWidgets import QMainWindow, QApplication
 from PyQt6.uic import loadUi
 from setup import gcinodesign, gcinotree, gcinotables, gcinobox, gcinoorders
 from events import eventshandler, filterevents
@@ -29,17 +29,18 @@ class gcinocorps(QMainWindow):
         
         self.gcino_window = gcinodesign(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.tab_3, self.ui.calendar_label, self.ui.calendar)
         self.gcino_tree = gcinotree(self.ui.treeWidget, self.ui.treeWidget_2)
-        self.gcino_table = gcinotables(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.export_csv_btn, self.ui.What_Box)
+        self.gcino_table = gcinotables(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.table_user, self.ui.export_csv_btn, self.ui.What_Box)
         for i in range(len(self.query_list)-1):
             self.Box = gcinobox(self.Box_list[i], self.query_list[i], type="all")
         self.Box = gcinobox(self.Box_list[len(self.query_list)-1], self.query_list[len(self.query_list)-1], type="one")
         
-        self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget, self.col_list, self.ui.treeWidget,self.ui.treeWidget_2, self.ui.search, self.ui.calendar, type='all')
+        self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget, self.ui.table_user, self.col_list, self.ui.treeWidget,self.ui.treeWidget_2, self.ui.search, self.ui.calendar, type='all')
         self.ui.tableWidget.cellClicked.connect(self.openModifyForm)
         self.returnForms()
         
         self.gcino_orders = gcinoorders(self.ui.send_btn, self.ui.request, self.ui.name, self.ui.description, self.ui.table_user, self.ui.count_label)
         self.ui.send_btn.clicked.connect(self.gcino_orders.sendRequest)
+        self.ui.clear_btn.clicked.connect(self.gcino_orders.clearContents)
 
     def openModifyForm(self, row, col):
         """Appeler la fonction exec() pour afficher la fenêtre modifyform
@@ -61,5 +62,5 @@ class gcinocorps(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = gcinocorps()
-    window.show()
+    window.showMaximized()
     sys.exit(app.exec())

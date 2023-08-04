@@ -42,7 +42,7 @@ class eventshandler(QDialog):
         tendency().exec()
 
 class filterevents(QDialog):
-    def __init__(self, Box, table, table2, col_name, treeWidget, treeWidget_2, search, calendar, type):
+    def __init__(self, Box, table, table2, table3, col_name, treeWidget, treeWidget_2, search, calendar, type):
         """
         """
         super(filterevents, self).__init__()
@@ -53,6 +53,7 @@ class filterevents(QDialog):
         self.tree_widget2 = treeWidget_2
         self.table2 = table2
         self.table2.setColumnHidden(5, True)
+        self.table3 = table3
         self.search = search
         self.search.setPlaceholderText("Search...")
         self.type = type
@@ -274,4 +275,4 @@ class filterevents(QDialog):
         mod_tree = gcinotree(self.tree_widget, self.tree_widget2)
         btn = QPushButton()
         box = QComboBox()
-        mod_hist = gcinotables(self.table2, self.table, btn, box)
+        mod_hist = gcinotables(self.table2, self.table, self.table3, btn, box)

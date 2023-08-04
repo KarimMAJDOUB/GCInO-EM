@@ -82,12 +82,13 @@ class gcinodesign(QDialog):
 
 
 class gcinotables(QMainWindow):
-    def __init__(self, tableWidget, tableWidget2, btn, type):
+    def __init__(self, tableWidget, tableWidget2, tableWidget3, btn, type):
         """
         """
         super(gcinotables, self).__init__()
         self.tableWidget = tableWidget
         self.tableWidget_2 = tableWidget2
+        self.tableWidget_3 = tableWidget3
         #self.tableWidget_2.setColumnHidden(4, True)
         self.btn = btn
         self.type = type
@@ -172,7 +173,38 @@ class gcinotables(QMainWindow):
                 self.tableWidget_2.setItem(table_row2, 6, QTableWidgetItem(row[6]))
                 self.tableWidget_2.setItem(table_row2, 7, QTableWidgetItem(row[7]))
                 self.tableWidget_2.setItem(table_row2, 8, QTableWidgetItem(row[8]))
-                table_row2 = table_row2 +1    
+                table_row2 = table_row2 +1 
+
+            conn3 = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                   database=self.db.DB_NAME)
+            cursor3 = conn3.cursor()
+            sql_query3 = f"""SELECT 
+                            orders, status
+                        FROM 
+                            fakegcino.orders
+                        WHERE user_id = '{self.LOGGED_USER_ID}'
+                        """
+            cursor3.execute(sql_query3)
+            myresult3 = cursor3.fetchall()
+
+            table_row3 = 0
+            self.tableWidget_3.setRowCount(len(myresult3))
+            for row in myresult3:
+                status_item = QTableWidgetItem(row[1])
+                if status_item.text() == "Approuved":
+                    status_item.setForeground(QColor("green"))
+                elif status_item.text() == "Declined":
+                    status_item.setForeground(QColor("red"))
+                elif status_item.text() == "Pending":
+                    status_item.setForeground(QColor("orange"))
+                elif status_item.text() == "Cancled":
+                    status_item.setForeground(QColor("grey"))
+                else:
+                    status_item.setForeground(QColor("black"))
+
+                self.tableWidget_3.setItem(table_row3, 0, QTableWidgetItem(row[0]))
+                self.tableWidget_3.setItem(table_row3, 1, status_item)
+                table_row3 = table_row3 +1    
         except Exception as e:
             print("Error while connecting to MySQL",e)
 
@@ -369,14 +401,12 @@ class gcinoorders(QDialog):
 
         #Local events
         self.description.textChanged.connect(self.updateCharactersCount)
-        
         self.send_btn.clicked.connect(self.fillRequestTable)
 
     def sendRequest(self):
         """
         """
         msg = MIMEMultipart()
-        
         msg['From'] = self.sender_mail
         msg['To'] = self.receiver_mail
         msg['Subject'] = str(self.request.text()) + ' - ' + str(self.name.text())
@@ -396,15 +426,14 @@ class gcinoorders(QDialog):
         request_text = str(self.request.text())
         name_text = str(self.name.text())
         descrip_text = str(self.description.toPlainText())
-
         try:
             conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                     database=self.db.DB_NAME)
             mycursor = conn.cursor()
-            query_insert = """INSERT INTO orders(orderID, orders, orderObject, description) VALUES (%s, '%s', '%s', "%s")"""%(id+1, request_text, name_text, descrip_text)
+            query_insert = """INSERT INTO orders(orderID, orders, orderObject, user_id, description, status) VALUES (%s, '%s', '%s', %s, "%s", '%s')"""%(id+1, request_text, name_text, self.LOGGED_USER_ID, descrip_text, "Pending")
             mycursor.execute(query_insert)
             
-            query_select = """SELECT orders from orders"""
+            query_select = """SELECT orders, status from orders"""
             mycursor.execute(query_select)
             data = mycursor.fetchall()
             for i in data:
@@ -413,23 +442,29 @@ class gcinoorders(QDialog):
             conn.commit()
             self.close()
             if request_text:
-                row_position = self.table.rowCount()
+                row_position = self.table.rowCount() 
                 self.table.insertRow(row_position)
                 self.table.setItem(row_position, 0, QTableWidgetItem(request_id))
                 status_item = QTableWidgetItem("Pending")
                 status_item.setForeground(QColor("orange"))
                 self.table.setItem(row_position, 1, status_item)
-            
+                
+
         except Exception as e:
-            print("Error while connecting to MySQL",e)
+            QMessageBox.about(self, "Warning", str(e))
 
     def updateCharactersCount(self):
         """
         """
         char_count = len(self.description.toPlainText())
-        self.count_label.setText(f"{char_count}/100")
-        if char_count >= 100:
+        self.count_label.setText(f"{char_count}/1000")
+        if char_count >= 1000:
             self.count_label.setStyleSheet("color: red;")
             QMessageBox.about(self, "error", "Not valid Description")
         else:
             self.count_label.setStyleSheet("color: black;")
+
+    def clearContents(self):
+        self.description.clear()
+        self.name.clear()
+        self.request.clear()
