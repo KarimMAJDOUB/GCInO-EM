@@ -9,10 +9,9 @@
 ################################################################################
 import os
 import sys
-from PyQt6.QtWidgets import QMainWindow
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QMainWindow, QMessageBox, QApplication
 from PyQt6.uic import loadUi
-from setup import gcinodesign, gcinotree, gcinotables, gcinobox
+from setup import gcinodesign, gcinotree, gcinotables, gcinobox, gcinoorders
 from events import eventshandler, filterevents
 from forms import modifyform
 
@@ -38,6 +37,9 @@ class gcinocorps(QMainWindow):
         self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget, self.col_list, self.ui.treeWidget,self.ui.treeWidget_2, self.ui.search, self.ui.calendar, type='all')
         self.ui.tableWidget.cellClicked.connect(self.openModifyForm)
         self.returnForms()
+        
+        self.gcino_orders = gcinoorders(self.ui.send_btn, self.ui.request, self.ui.name, self.ui.description, self.ui.table_user, self.ui.count_label)
+        self.ui.send_btn.clicked.connect(self.gcino_orders.sendRequest)
 
     def openModifyForm(self, row, col):
         """Appeler la fonction exec() pour afficher la fenêtre modifyform

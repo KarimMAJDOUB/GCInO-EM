@@ -8,13 +8,17 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 import os
-from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog, QCalendarWidget
+import configparser
+from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog
+from PyQt6.QtGui import QColor
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
 import csv 
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 class gcinodesign(QDialog):
     def __init__(self, table, table2, tab, calendar_label, calendar):
@@ -120,6 +124,8 @@ class gcinotables(QMainWindow):
                             Object, Type_object, Location, CAST(Calibration as char), CAST(Quantity as char), Category
                         FROM 
                             fakegcino.object_dist
+                        ORDER BY
+                            Object
                         """
             cursor.execute(sql_query)
             myresult = cursor.fetchall()
@@ -328,3 +334,102 @@ class gcinobox(QDialog):
         for i in data :
             var = str(i[0])
             self.Box.addItem(var)
+
+class gcinoorders(QDialog):
+    def __init__(self, send_btn, request, name, description, table, count_label):
+        """
+        """
+        super(gcinoorders, self).__init__()
+        # UI components 
+        self.send_btn = send_btn
+        self.request = request
+        self.name = name
+        self.description = description
+        self.table = table
+        self.table.setColumnWidth(0,325)
+        self.table.setColumnWidth(1,325)
+        self.count_label = count_label
+
+        #Connect to Database
+        self.db = Database()
+        config_object = ConfigParser()
+        config_object.read("config.ini")
+        userInfo = config_object["USERINFO"]
+        self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
+        self.LOGGED_USER_ROLE = userInfo["LOGGED_USER_ROLE"]
+
+        #Connect to the e-mail (SMTP connection)
+        self.config = configparser.ConfigParser()
+        self.config.read('orders_config.ini')
+        self.smtp_server = self.config['Server']['smtp_server']
+        self.smtp_port = int(self.config['Server']['smtp_port'])
+        self.sender_mail = self.config['User']['email']
+        self.password = self.config['User']['password']
+        self.receiver_mail = self.config['User']['receiver_email']
+
+        #Local events
+        self.description.textChanged.connect(self.updateCharactersCount)
+        
+        self.send_btn.clicked.connect(self.fillRequestTable)
+
+    def sendRequest(self):
+        """
+        """
+        msg = MIMEMultipart()
+        
+        msg['From'] = self.sender_mail
+        msg['To'] = self.receiver_mail
+        msg['Subject'] = str(self.request.text()) + ' - ' + str(self.name.text())
+        msg.attach(MIMEText(str(self.description.toPlainText())))
+        
+        # Établir la connexion SMTP
+        server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+        server.starttls()
+        server.login(self.sender_mail, self.password)
+        server.sendmail(self.sender_mail, self.receiver_mail, msg.as_string())
+        server.quit()
+
+    def fillRequestTable(self):
+        """
+        """
+        id = 0
+        request_text = str(self.request.text())
+        name_text = str(self.name.text())
+        descrip_text = str(self.description.toPlainText())
+
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            query_insert = """INSERT INTO orders(orderID, orders, orderObject, description) VALUES (%s, '%s', '%s', "%s")"""%(id+1, request_text, name_text, descrip_text)
+            mycursor.execute(query_insert)
+            
+            query_select = """SELECT orders from orders"""
+            mycursor.execute(query_select)
+            data = mycursor.fetchall()
+            for i in data:
+                request_id = i[0]
+            id = id+1
+            conn.commit()
+            self.close()
+            if request_text:
+                row_position = self.table.rowCount()
+                self.table.insertRow(row_position)
+                self.table.setItem(row_position, 0, QTableWidgetItem(request_id))
+                status_item = QTableWidgetItem("Pending")
+                status_item.setForeground(QColor("orange"))
+                self.table.setItem(row_position, 1, status_item)
+            
+        except Exception as e:
+            print("Error while connecting to MySQL",e)
+
+    def updateCharactersCount(self):
+        """
+        """
+        char_count = len(self.description.toPlainText())
+        self.count_label.setText(f"{char_count}/100")
+        if char_count >= 100:
+            self.count_label.setStyleSheet("color: red;")
+            QMessageBox.about(self, "error", "Not valid Description")
+        else:
+            self.count_label.setStyleSheet("color: black;")
