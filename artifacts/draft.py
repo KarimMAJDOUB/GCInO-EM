@@ -1,40 +1,54 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QTextEdit, QLabel, QWidget
-from PyQt5.QtCore import Qt
+import mysql.connector
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem
 
-class CharacterCounter(QMainWindow):
+class MyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Character Counter")
+        # Connexion à la base de données MySQL
+        self.conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="Krayem99882056&&&",
+            database="fakegcino"
+        )
 
-        layout = QVBoxLayout()
+        self.initUI()
 
-        self.text_edit = QTextEdit()
-        layout.addWidget(self.text_edit)
+    def initUI(self):
+        self.setGeometry(100, 100, 800, 600)
+        self.tableWidget = QTableWidget(self)
+        self.tableWidget.setGeometry(50, 50, 700, 500)
+        
+        # Charger les données initiales
+        self.loadTableData()
 
-        self.character_count_label = QLabel("0/1000")
-        layout.addWidget(self.character_count_label, alignment=Qt.AlignHCenter)
+    def loadTableData(self):
+        cursor = self.conn.cursor()
+        query = "SELECT * FROM orders"
+        cursor.execute(query)
+        result = cursor.fetchall()
 
-        self.text_edit.textChanged.connect(self.update_character_count)
+        # Effacer les données actuellement affichées
+        self.tableWidget.clear()
+        self.tableWidget.setRowCount(0)
+        
+        # Ajouter les en-têtes de colonnes
+        column_headers = [desc[0] for desc in cursor.description]
+        self.tableWidget.setColumnCount(len(column_headers))
+        self.tableWidget.setHorizontalHeaderLabels(column_headers)
 
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
+        # Ajouter les données au QTableWidget
+        for row_number, row_data in enumerate(result):
+            self.tableWidget.insertRow(row_number)
+            for col_number, cell_data in enumerate(row_data):
+                self.tableWidget.setItem(row_number, col_number, QTableWidgetItem(str(cell_data)))
 
-    def update_character_count(self):
-        character_count = len(self.text_edit.toPlainText())
-        self.character_count_label.setText(f"{character_count}/1000")
+        cursor.close()
 
-        if character_count > 10:
-            self.character_count_label.setStyleSheet("color: red;")
-            self.text_edit.setReadOnly(True)  # Désactiver la saisie
-        else:
-            self.character_count_label.setStyleSheet("color: black;")
-            self.text_edit.setReadOnly(False)  # Activer la saisie
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = CharacterCounter()
+    window = MyWindow()
     window.show()
     sys.exit(app.exec_())

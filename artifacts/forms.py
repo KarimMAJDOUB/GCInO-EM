@@ -18,7 +18,7 @@ from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
 from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QFileDialog, QLineEdit
+from PyQt6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QFileDialog
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 

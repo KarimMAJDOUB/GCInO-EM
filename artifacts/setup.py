@@ -8,9 +8,12 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 import os
+import random
+import string
 import configparser
-from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog
-from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog, QHBoxLayout, QPushButton
+from PyQt6.QtGui import QIcon, QColor
+from PyQt6.QtCore import Qt, QTimer
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
@@ -67,6 +70,7 @@ class gcinodesign(QDialog):
         else:
             for child_widget in widget.findChildren(QWidget):
                 child_widget.setVisible(True)
+    
     
     def designCalendar(self):
         """
@@ -368,7 +372,7 @@ class gcinobox(QDialog):
             self.Box.addItem(var)
 
 class gcinoorders(QDialog):
-    def __init__(self, send_btn, request, name, description, table, count_label):
+    def __init__(self, send_btn, request, name, description, quantity, cout, table_user, count_label, table_warehouseman):
         """
         """
         super(gcinoorders, self).__init__()
@@ -377,10 +381,19 @@ class gcinoorders(QDialog):
         self.request = request
         self.name = name
         self.description = description
-        self.table = table
+        self.quantity = quantity
+        self.cout = cout
+        self.table = table_user
         self.table.setColumnWidth(0,325)
         self.table.setColumnWidth(1,325)
         self.count_label = count_label
+        self.table2 = table_warehouseman
+        self.table2.setColumnWidth(0,50)
+        self.table2.setColumnWidth(1,200)
+        self.table2.setColumnWidth(2,200)
+        self.table2.setColumnWidth(3,200)
+        self.table2.setColumnWidth(4,100)
+        self.table2.setColumnWidth(5,100)
 
         #Connect to Database
         self.db = Database()
@@ -401,7 +414,10 @@ class gcinoorders(QDialog):
 
         #Local events
         self.description.textChanged.connect(self.updateCharactersCount)
-        self.send_btn.clicked.connect(self.fillRequestTable)
+        self.send_btn.clicked.connect(self.insertIntoOrderDB)
+        self.send_btn.clicked.connect(self.addOrder)
+        self.send_btn.clicked.connect(self.fillOrdersTable)
+        self.fillOrdersTable()
 
     def sendRequest(self):
         """
@@ -419,26 +435,40 @@ class gcinoorders(QDialog):
         server.sendmail(self.sender_mail, self.receiver_mail, msg.as_string())
         server.quit()
 
-    def fillRequestTable(self):
+    def generateOrderID(self):
         """
         """
-        id = 0
-        request_text = str(self.request.text())
-        name_text = str(self.name.text())
-        descrip_text = str(self.description.toPlainText())
         try:
             conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                     database=self.db.DB_NAME)
             mycursor = conn.cursor()
-            query_insert = """INSERT INTO orders(orderID, orders, orderObject, user_id, description, status) VALUES (%s, '%s', '%s', %s, "%s", '%s')"""%(id+1, request_text, name_text, self.LOGGED_USER_ID, descrip_text, "Pending")
-            mycursor.execute(query_insert)
-            
-            query_select = """SELECT orders, status from orders"""
+            random_id = "C" + ''.join([str(random.randint(0, 9)) for _ in range(7)])
+            query_select = """SELECT orderID from orders"""
+            mycursor.execute(query_select)
+            data = mycursor.fetchall()
+            for i in data:
+                order_id = i[0]
+                if (order_id == random_id):
+                    random_id = "O"+ ''.join([str(random.randint(0, 9)) for _ in range(7)])
+                else:
+                    pass
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))
+        return random_id
+
+    def addOrder(self):
+        """
+        """
+        request_text = str(self.request.text())
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            query_select = """SELECT orders, status from orders where user_id =%s"""%(self.LOGGED_USER_ID)
             mycursor.execute(query_select)
             data = mycursor.fetchall()
             for i in data:
                 request_id = i[0]
-            id = id+1
             conn.commit()
             self.close()
             if request_text:
@@ -448,8 +478,26 @@ class gcinoorders(QDialog):
                 status_item = QTableWidgetItem("Pending")
                 status_item.setForeground(QColor("orange"))
                 self.table.setItem(row_position, 1, status_item)
-                
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))
 
+    def insertIntoOrderDB(self):
+        """
+        """
+        request_text = str(self.request.text())
+        name_text = str(self.name.text())
+        descrip_text = str(self.description.toPlainText())
+        quantity_text = str(self.quantity.text())
+        cout_text = str(self.cout.text())
+        random_id = self.generateOrderID()
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            query_insert = """INSERT INTO orders(orderID, orders, object, user_id, description, quantity, price, status) VALUES ('%s', '%s', '%s', %s, "%s", %s, %s, '%s')"""%(random_id, request_text, name_text, self.LOGGED_USER_ID, descrip_text, int(quantity_text), float(cout_text),"Pending")
+            mycursor.execute(query_insert)
+            conn.commit()
+            self.close()
         except Exception as e:
             QMessageBox.about(self, "Warning", str(e))
 
@@ -468,3 +516,242 @@ class gcinoorders(QDialog):
         self.description.clear()
         self.name.clear()
         self.request.clear()
+
+    def acceptClicked(self, row, cond='clicked'):
+        """
+        """
+        #MessageBox information
+        self.table2.removeCellWidget(row, 5) 
+        if cond != 'clicked': 
+            pass
+        else:
+            QMessageBox.information(self, "Accept", "Accepted")
+
+        #Update QTableWidget
+        mod_icon = QIcon("./pen.png")
+        mod_button = QPushButton()
+        mod_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        mod_button.setIcon(mod_icon)
+        mod_button.setFixedSize(20, 20)
+        mod_button.clicked.connect(lambda _, row=row: self.modifyClicked(row))
+        mod_button.clicked.connect(self.fillOrderTableByUser)
+        mod_layout = QHBoxLayout()
+        mod_layout.addWidget(mod_button)
+        mod_widget = QWidget()
+        mod_widget.setLayout(mod_layout)
+        status_item = QTableWidgetItem("Approuved")
+        status_item.setForeground(QColor("green"))
+        self.table2.setCellWidget(row, 5, mod_widget)
+        self.table2.setItem(row, 4, status_item)
+
+        #Update Database
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            orderid = self.table2.item(row,0).text()
+            
+            query_update = "UPDATE orders SET status ='Approuved' Where orderID = '%s'" %(orderid)
+            mycursor.execute(query_update)
+            conn.commit()
+            self.close()
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))
+
+    def rejectClicked(self, row, cond='clicked'):
+        self.table2.removeCellWidget(row, 5) 
+        if cond =='clicked':
+            QMessageBox.information(self, "Reject", "Rejected")
+        else:
+            pass
+        
+        #Update QTableWidget
+        mod_icon = QIcon("./pen.png")
+        mod_button = QPushButton()
+        mod_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        mod_button.setIcon(mod_icon)
+        mod_button.setFixedSize(20, 20)
+        mod_button.clicked.connect(lambda _, row=row: self.modifyClicked(row))
+        mod_button.clicked.connect(self.fillOrderTableByUser)
+        mod_layout = QHBoxLayout()
+        mod_layout.addWidget(mod_button)
+        mod_widget = QWidget()
+        mod_widget.setLayout(mod_layout)
+        status_item = QTableWidgetItem("Declined")
+        status_item.setForeground(QColor("red"))
+
+        self.table2.setCellWidget(row, 5, mod_widget)
+        self.table2.setItem(row, 4, status_item)
+
+        #Update Database
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            orderid = self.table2.item(row,0).text()
+            
+            query_update = "UPDATE orders SET status ='Declined' Where orderID = '%s'" %(orderid)
+            mycursor.execute(query_update)
+            conn.commit()
+            self.close()
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))
+
+    def modifyClicked(self, row):
+        """
+        """
+        accept_icon = QIcon("./accept.png")  # Replace with actual accept icon path
+        refuse_icon = QIcon("./rejected.png")
+        actions_layout = QHBoxLayout()
+        accept_button = QPushButton()
+        accept_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        accept_button.setIcon(accept_icon)
+        accept_button.setFixedSize(20, 20)
+        accept_button.clicked.connect(lambda _, row=row: self.acceptClicked(row))
+        accept_button.clicked.connect(self.fillOrderTableByUser)
+
+        refuse_button = QPushButton()
+        refuse_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        refuse_button.setIcon(refuse_icon)
+        refuse_button.setFixedSize(20, 20)
+        refuse_button.clicked.connect(lambda _, row=row: self.rejectClicked(row))
+        refuse_button.clicked.connect(self.fillOrderTableByUser)
+        actions_layout.addWidget(accept_button)
+        actions_layout.addWidget(refuse_button)
+        actions_widget = QWidget()
+        actions_widget.setLayout(actions_layout)
+        status_item = QTableWidgetItem("Pending")
+        status_item.setForeground(QColor("orange"))
+                    
+        self.table2.setItem(row, 4, status_item)
+        self.table2.setCellWidget(row, 5, actions_widget)
+
+        #Update Database
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            orderid = self.table2.item(row,0).text()
+            
+            query_update = "UPDATE orders SET status ='Pending' Where orderID = '%s'" %(orderid)
+            mycursor.execute(query_update)
+            conn.commit()
+            self.close()
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))
+    
+    def cancelClicked(self, row):
+        """
+        """
+        cancel_icon = QIcon("./cancel.png") 
+        cancel_layout = QHBoxLayout()
+        cancel_button = QPushButton()
+        cancel_button.setIcon(cancel_icon)
+        cancel_button.setFixedSize(20, 20)
+        cancel_layout.addWidget(cancel_button)
+        cancel_widget = QWidget()
+        cancel_widget.setLayout(cancel_layout)
+        self.table2.setItem(row, 4, QTableWidgetItem("Canceled"))
+        self.table2.setCellWidget(row, 5, cancel_widget)
+    
+    def fillOrderTableByUser(self):
+        """
+        """
+        self.table.clearContents()
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            query_select = """SELECT 
+                                o.orders, o.status
+                              FROM
+                                orders o
+                                WHERE user_id =%s
+                           """%(self.LOGGED_USER_ID)
+            mycursor.execute(query_select)
+            data = mycursor.fetchall()
+            table_row = 0
+            self.table.setRowCount(len(data))
+            for row in data:
+                self.table.setItem(table_row, 0, QTableWidgetItem(row[0]))
+                status_item = QTableWidgetItem(row[1])
+                if status_item.text() == "Pending":
+                    status_item.setForeground(QColor("orange"))
+                elif status_item.text() == "Approuved":
+                    status_item.setForeground(QColor("green"))
+                elif status_item.text() == "Declined":
+                    status_item.setForeground(QColor("red"))
+                else:
+                    status_item.setForeground(QColor("grey"))
+                self.table.setItem(table_row, 1, status_item)
+                table_row = table_row+1
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))
+
+
+    def fillOrdersTable(self):
+        """
+        """
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            query_select = """SELECT 
+                                o.orderID, o.orders, o.object, m.name, o.status
+                              FROM
+                                orders o
+                              INNER JOIN
+                                managers m
+                              ON
+                                m.id = o.user_id
+                            ORDER BY 
+                                o.status DESC
+                           """
+            mycursor.execute(query_select)
+            
+            mycursor.execute(query_select)
+            data = mycursor.fetchall()
+            table_row = 0
+            self.table2.setRowCount(len(data))
+            accept_icon = QIcon("./accept.png")  
+            refuse_icon = QIcon("./rejected.png")
+            
+            for row in data:
+                self.table2.setItem(table_row, 0, QTableWidgetItem(row[0]))
+                self.table2.setItem(table_row, 1, QTableWidgetItem(row[1]))
+                self.table2.setItem(table_row, 2, QTableWidgetItem(row[2]))
+                self.table2.setItem(table_row, 3, QTableWidgetItem(row[3]))
+                status_item = QTableWidgetItem(row[4])
+                status_item.setForeground(QColor("orange"))
+                self.table2.setItem(table_row, 4, status_item)
+                if self.table2.item(table_row, 4).text() == "Pending":
+                    actions_layout = QHBoxLayout()
+                    accept_button = QPushButton()
+                    accept_button.setCursor(Qt.CursorShape.PointingHandCursor)
+                    accept_button.setIcon(accept_icon)
+                    accept_button.setFixedSize(20, 20)
+                    accept_button.clicked.connect(lambda _, row=table_row: self.acceptClicked(row))
+                    accept_button.clicked.connect(self.fillOrderTableByUser)
+
+                    refuse_button = QPushButton()
+                    refuse_button.setCursor(Qt.CursorShape.PointingHandCursor)
+                    refuse_button.setIcon(refuse_icon)
+                    refuse_button.setFixedSize(20, 20)
+                    refuse_button.clicked.connect(lambda _, row=table_row: self.rejectClicked(row))
+                    refuse_button.clicked.connect(self.fillOrderTableByUser)
+
+                    actions_layout.addWidget(accept_button)
+                    actions_layout.addWidget(refuse_button)
+                    actions_widget = QWidget()
+                    actions_widget.setLayout(actions_layout)
+                    self.table2.setCellWidget(table_row, 5, actions_widget)
+                elif self.table2.item(table_row, 4).text() == "Declined":
+                    self.rejectClicked(table_row, cond='NoClicked')
+                elif self.table2.item(table_row, 4).text() == "Approuved":
+                    self.acceptClicked(table_row, cond='NoClicked')
+                else:
+                    self.cancelClicked(table_row)
+                table_row = table_row +1  
+
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))

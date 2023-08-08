@@ -38,8 +38,8 @@ class gcinocorps(QMainWindow):
         self.ui.tableWidget.cellClicked.connect(self.openModifyForm)
         self.returnForms()
         
-        self.gcino_orders = gcinoorders(self.ui.send_btn, self.ui.request, self.ui.name, self.ui.description, self.ui.table_user, self.ui.count_label)
-        self.ui.send_btn.clicked.connect(self.gcino_orders.sendRequest)
+        self.gcino_orders = gcinoorders(self.ui.send_btn, self.ui.request, self.ui.name, self.ui.description, self.ui.quantity, self.ui.cout, self.ui.table_user, self.ui.count_label, self.ui.table_warehouseman)
+        #self.ui.send_btn.clicked.connect(self.gcino_orders.sendRequest)
         self.ui.clear_btn.clicked.connect(self.gcino_orders.clearContents)
 
     def openModifyForm(self, row, col):
