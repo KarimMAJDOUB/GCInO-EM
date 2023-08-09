@@ -8,7 +8,7 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 import os
-from forms import insertform, profileform, tendency, projectform, modifyform
+from forms import insertform, profileform, tendency, projectform, bordoreauform
 from PyQt6.QtWidgets import QDialog, QTableWidgetItem, QMessageBox, QComboBox, QPushButton
 
 from database import Database

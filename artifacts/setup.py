@@ -9,22 +9,23 @@
 ################################################################################
 import os
 import random
-import string
 import configparser
 from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog, QHBoxLayout, QPushButton
 from PyQt6.QtGui import QIcon, QColor
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
+from PyQt6.uic import loadUi
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
 import csv 
+from openpyxl import load_workbook
 from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 class gcinodesign(QDialog):
-    def __init__(self, table, table2, tab, calendar_label, calendar):
+    def __init__(self, table, table2, tab, calendar_label, calendar, tabwidget):
         """
         """
         super(gcinodesign, self).__init__()
@@ -34,6 +35,7 @@ class gcinodesign(QDialog):
         self.calendar_label = calendar_label
         self.calendar = calendar
         self.calendar.setVisible(False)
+        self.tabwidget = tabwidget
 
         #Backend
         self.db = Database()
@@ -47,6 +49,7 @@ class gcinodesign(QDialog):
         self.designTables()
         self.disableTab(self.tab)
         self.designCalendar()
+        #self.organiseTabsWithGrade()
 
     def designTables(self):
         cols=["Object","Type","Location","Calibration","Quantity", "Category"]
@@ -70,7 +73,16 @@ class gcinodesign(QDialog):
         else:
             for child_widget in widget.findChildren(QWidget):
                 child_widget.setVisible(True)
-    
+    def organiseTabsWithGrade(self):
+        """
+        """
+        if self.LOGGED_USER_ROLE == "user":
+            self.tabwidget.removeTab(4)
+            self.tabwidget.removeTab(1)
+        elif self.LOGGED_USER_ROLE == "warehouseman":
+            self.tabwidget.removeTab(3)
+        else:
+            self.tabwidget.removeTab(5)
     
     def designCalendar(self):
         """
@@ -82,8 +94,6 @@ class gcinodesign(QDialog):
         """
         self.calendar.setVisible(not self.calendar.isVisible())
         event.accept() 
-
-
 
 class gcinotables(QMainWindow):
     def __init__(self, tableWidget, tableWidget2, tableWidget3, btn, type):
@@ -388,12 +398,13 @@ class gcinoorders(QDialog):
         self.table.setColumnWidth(1,325)
         self.count_label = count_label
         self.table2 = table_warehouseman
-        self.table2.setColumnWidth(0,50)
+        self.table2.setColumnWidth(0,100)
         self.table2.setColumnWidth(1,200)
         self.table2.setColumnWidth(2,200)
         self.table2.setColumnWidth(3,200)
         self.table2.setColumnWidth(4,100)
         self.table2.setColumnWidth(5,100)
+        self.table2.setColumnWidth(6,150)
 
         #Connect to Database
         self.db = Database()
@@ -455,6 +466,24 @@ class gcinoorders(QDialog):
         except Exception as e:
             QMessageBox.about(self, "Warning", str(e))
         return random_id
+    
+    def updateCharactersCount(self):
+        """
+        """
+        char_count = len(self.description.toPlainText())
+        self.count_label.setText(f"{char_count}/1000")
+        if char_count >= 1000:
+            self.count_label.setStyleSheet("color: red;")
+            QMessageBox.about(self, "error", "Not valid Description")
+        else:
+            self.count_label.setStyleSheet("color: black;")
+    
+    def clearContents(self):
+        """
+        """
+        self.description.clear()
+        self.name.clear()
+        self.request.clear()
 
     def addOrder(self):
         """
@@ -501,21 +530,25 @@ class gcinoorders(QDialog):
         except Exception as e:
             QMessageBox.about(self, "Warning", str(e))
 
-    def updateCharactersCount(self):
+    def generateBordoreau(self, row):
         """
         """
-        char_count = len(self.description.toPlainText())
-        self.count_label.setText(f"{char_count}/1000")
-        if char_count >= 1000:
-            self.count_label.setStyleSheet("color: red;")
-            QMessageBox.about(self, "error", "Not valid Description")
-        else:
-            self.count_label.setStyleSheet("color: black;")
+        order_id = self.table2.item(row,0).text()
+        name = self.table2.item(row,2).text()
 
-    def clearContents(self):
-        self.description.clear()
-        self.name.clear()
-        self.request.clear()
+        excel_file = os.path.join("./", "test.xlsx")
+        workbook = load_workbook(excel_file)
+        sheet = workbook.active
+
+        # Find the next available row (starting from the 5th row)
+        next_row = sheet.max_row + 1 if sheet.max_row >= 5 else 5
+
+        # Insert values into specific rows and columns
+        sheet.cell(row=next_row, column=1, value= order_id)
+        sheet.cell(row=next_row, column=2, value=name)
+
+        # Save the changes
+        workbook.save(excel_file)
 
     def acceptClicked(self, row, cond='clicked'):
         """
@@ -543,6 +576,7 @@ class gcinoorders(QDialog):
         status_item.setForeground(QColor("green"))
         self.table2.setCellWidget(row, 5, mod_widget)
         self.table2.setItem(row, 4, status_item)
+        self.designAddIcon(row)
 
         #Update Database
         try:
@@ -609,6 +643,7 @@ class gcinoorders(QDialog):
         accept_button.setFixedSize(20, 20)
         accept_button.clicked.connect(lambda _, row=row: self.acceptClicked(row))
         accept_button.clicked.connect(self.fillOrderTableByUser)
+        accept_button.clicked.connect(lambda _, row=row: self.generateBordoreau(row))
 
         refuse_button = QPushButton()
         refuse_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -625,6 +660,8 @@ class gcinoorders(QDialog):
                     
         self.table2.setItem(row, 4, status_item)
         self.table2.setCellWidget(row, 5, actions_widget)
+        empty_item = QWidget()
+        self.table2.setCellWidget(row,6, empty_item)
 
         #Update Database
         try:
@@ -654,6 +691,26 @@ class gcinoorders(QDialog):
         self.table2.setItem(row, 4, QTableWidgetItem("Canceled"))
         self.table2.setCellWidget(row, 5, cancel_widget)
     
+    def confirmClicked(self, row):
+        """
+        """
+        cancel_widget = QWidget()
+        self.table2.setItem(row, 4, QTableWidgetItem("Confirmed"))
+        self.table2.setCellWidget(row, 5, cancel_widget)
+
+    def designAddIcon(self, row):
+        """
+        """
+        add_icon = QIcon("./add.png") 
+        add_layout = QHBoxLayout()
+        add_button = QPushButton()
+        add_button.setIcon(add_icon)
+        add_button.setFixedSize(20, 20)
+        add_layout.addWidget(add_button)
+        add_widget = QWidget()
+        add_widget.setLayout(add_layout)
+        self.table2.setCellWidget(row, 6, add_widget)
+
     def fillOrderTableByUser(self):
         """
         """
@@ -664,10 +721,13 @@ class gcinoorders(QDialog):
             mycursor = conn.cursor()
             query_select = """SELECT 
                                 o.orders, o.status
-                              FROM
+                            FROM
                                 orders o
-                                WHERE user_id =%s
-                           """%(self.LOGGED_USER_ID)
+                            WHERE 
+                                user_id =%s
+                            ORDER BY
+                                o.status DESC
+                           """ %(self.LOGGED_USER_ID)
             mycursor.execute(query_select)
             data = mycursor.fetchall()
             table_row = 0
@@ -708,8 +768,6 @@ class gcinoorders(QDialog):
                                 o.status DESC
                            """
             mycursor.execute(query_select)
-            
-            mycursor.execute(query_select)
             data = mycursor.fetchall()
             table_row = 0
             self.table2.setRowCount(len(data))
@@ -732,6 +790,7 @@ class gcinoorders(QDialog):
                     accept_button.setFixedSize(20, 20)
                     accept_button.clicked.connect(lambda _, row=table_row: self.acceptClicked(row))
                     accept_button.clicked.connect(self.fillOrderTableByUser)
+                    accept_button.clicked.connect(lambda _, row=table_row: self.generateBordoreau(row))
 
                     refuse_button = QPushButton()
                     refuse_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -749,6 +808,9 @@ class gcinoorders(QDialog):
                     self.rejectClicked(table_row, cond='NoClicked')
                 elif self.table2.item(table_row, 4).text() == "Approuved":
                     self.acceptClicked(table_row, cond='NoClicked')
+                    self.designAddIcon(table_row)
+                elif self.table2.item(table_row,4).text() == "Confirmed":
+                    self.confirmClicked(table_row)
                 else:
                     self.cancelClicked(table_row)
                 table_row = table_row +1  

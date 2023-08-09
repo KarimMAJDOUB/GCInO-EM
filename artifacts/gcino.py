@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import QMainWindow, QApplication
 from PyQt6.uic import loadUi
 from setup import gcinodesign, gcinotree, gcinotables, gcinobox, gcinoorders
 from events import eventshandler, filterevents
-from forms import modifyform
+from forms import modifyform, bordoreauform
 
 class gcinocorps(QMainWindow):
     def __init__(self):
@@ -27,7 +27,7 @@ class gcinocorps(QMainWindow):
         self.col_list = ["project_name", "name", "operation_datetime", "actions", "Type_object"]
         self.modify_form = modifyform(self.ui.tableWidget)
         
-        self.gcino_window = gcinodesign(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.tab_3, self.ui.calendar_label, self.ui.calendar)
+        self.gcino_window = gcinodesign(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.tab_3, self.ui.calendar_label, self.ui.calendar, self.ui.tabWidget)
         self.gcino_tree = gcinotree(self.ui.treeWidget, self.ui.treeWidget_2)
         self.gcino_table = gcinotables(self.ui.tableWidget, self.ui.tableWidget_2, self.ui.table_user, self.ui.export_csv_btn, self.ui.What_Box)
         for i in range(len(self.query_list)-1):
@@ -36,11 +36,23 @@ class gcinocorps(QMainWindow):
         
         self.filter = filterevents(self.Box_list,self.ui.tableWidget_2,self.ui.tableWidget, self.ui.table_user, self.col_list, self.ui.treeWidget,self.ui.treeWidget_2, self.ui.search, self.ui.calendar, type='all')
         self.ui.tableWidget.cellClicked.connect(self.openModifyForm)
+        
         self.returnForms()
         
         self.gcino_orders = gcinoorders(self.ui.send_btn, self.ui.request, self.ui.name, self.ui.description, self.ui.quantity, self.ui.cout, self.ui.table_user, self.ui.count_label, self.ui.table_warehouseman)
-        #self.ui.send_btn.clicked.connect(self.gcino_orders.sendRequest)
         self.ui.clear_btn.clicked.connect(self.gcino_orders.clearContents)
+        self.ui.table_warehouseman.cellClicked.connect(self.openApprouved)
+
+    def openApprouved(self, row, col):
+        """
+        """
+        item = self.table_warehouseman.item(row, 4).text()
+        if col == 6 and item == "Approuved":
+            #Open the form 
+            bordoreauform(self.ui.table_warehouseman, row).exec()
+            #Create or Modify the excel file 
+        else:
+            pass
 
     def openModifyForm(self, row, col):
         """Appeler la fonction exec() pour afficher la fenêtre modifyform

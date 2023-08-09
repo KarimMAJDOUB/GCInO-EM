@@ -13,12 +13,14 @@ from datetime import datetime
 import datetime as dt
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from openpyxl import load_workbook
+
 
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
 from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QFileDialog
+from PyQt6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QFileDialog, QWidget, QTableWidgetItem
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 
@@ -1006,3 +1008,91 @@ class modifyform(insertform, QDialog):
                 mycursor.execute(query_insert)
                 conn.commit()
                 self.close()
+
+class bordoreauform(QDialog):
+    def __init__(self, table_warehouseman, row):
+        """
+        """
+        super(bordoreauform, self).__init__()
+        self.ui = loadUi(os.path.join(os.path.dirname(__file__), "approuved.ui"), self)
+        self.table_warehouseman = table_warehouseman
+        self.row = row
+
+        #Connect to DB
+        self.db = Database()
+        config_object = ConfigParser()
+        config_object.read("config.ini")
+        userInfo = config_object["USERINFO"]
+        self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
+        
+        #Local events
+        self.ui.gener_br_btn.clicked.connect(self.addToBordoreau)
+
+    def getNumberOfBordoreau(self):
+        """
+        """
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            
+            query_select = """SELECT count(Distinct(user_id)) from orders where status='Approuved'"""
+            mycursor.execute(query_select)
+            data = mycursor.fetchall()
+            for i in data:
+                numb_bord = i[0]      
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))
+
+        return numb_bord
+    
+    def addToBordoreau(self):
+        """
+        """
+        #self.table_warehouseman.setItem(row,4,QTableWidgetItem("Confirmed"))
+        id = self.table_warehouseman.item(self.row, 0).text()
+        price = str(self.ui.cout.text()) + " €"
+        source = str(self.ui.link.text())
+        quantity = str(self.ui.quantity.text())
+        description = str(self.ui.description.toPlainText())
+
+        if not price or not source:
+            QMessageBox.about(self, "Warning","Both fields must be filled.")
+            return
+        #generate or update the excel file
+        excel_file = "./test.xlsx"
+
+        workbook = load_workbook(excel_file)
+        sheet = workbook.active
+        for row_number, row in enumerate(sheet.iter_rows(min_row=5, values_only=True), start=5):
+            id_value = row[0]  # Assuming id is in the first column
+            if id_value == id:
+                # Update the value in the third column (column index is 3)
+                cell_price = sheet.cell(row=row_number, column=4)
+                cell_price.value = price
+                cell_quantity = sheet.cell(row=row_number, column=3)
+                cell_quantity.value = quantity
+                cell_source = sheet.cell(row=row_number, column=6)
+                cell_source.value = source
+                cell_description = sheet.cell(row=row_number, column=5)
+                cell_description.value = description
+        workbook.save(excel_file)
+
+        # Remove the cell widget from the table
+        empty_widget = QWidget()
+        self.table_warehouseman.setCellWidget(self.row, 6, empty_widget)
+        self.table_warehouseman.setCellWidget(self.row, 5, empty_widget)
+        self.table_warehouseman.setItem(self.row,4,QTableWidgetItem("Confirmed"))
+
+        try:
+            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                    database=self.db.DB_NAME)
+            mycursor = conn.cursor()
+            
+            query = """UPDATE orders SET status='Confirmed' WHERE orderID='%s'"""%(id)
+            mycursor.execute(query)
+            conn.commit()
+            
+        except Exception as e:
+            QMessageBox.about(self, "Warning", str(e))
+        self.close()

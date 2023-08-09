@@ -1,54 +1,19 @@
-import sys
-import mysql.connector
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem
+from openpyxl import load_workbook
 
-class MyWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+# Load the Excel file
+excel_file_path = "./test.xlsx"
+workbook = load_workbook(excel_file_path)
+sheet = workbook.active
 
-        # Connexion à la base de données MySQL
-        self.conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="Krayem99882056&&&",
-            database="fakegcino"
-        )
+# Iterate through rows starting from row 5 (assuming row 1 is the header)
+for row_number, row in enumerate(sheet.iter_rows(min_row=5, values_only=True), start=5):
+    id_value = row[0]  # Assuming id is in the first column
 
-        self.initUI()
+    if id_value == "0001":
+        # Update the value in the third column (column index is 3)
+        cell = sheet.cell(row=row_number, column=3)
+        cell.value = "test"
 
-    def initUI(self):
-        self.setGeometry(100, 100, 800, 600)
-        self.tableWidget = QTableWidget(self)
-        self.tableWidget.setGeometry(50, 50, 700, 500)
-        
-        # Charger les données initiales
-        self.loadTableData()
-
-    def loadTableData(self):
-        cursor = self.conn.cursor()
-        query = "SELECT * FROM orders"
-        cursor.execute(query)
-        result = cursor.fetchall()
-
-        # Effacer les données actuellement affichées
-        self.tableWidget.clear()
-        self.tableWidget.setRowCount(0)
-        
-        # Ajouter les en-têtes de colonnes
-        column_headers = [desc[0] for desc in cursor.description]
-        self.tableWidget.setColumnCount(len(column_headers))
-        self.tableWidget.setHorizontalHeaderLabels(column_headers)
-
-        # Ajouter les données au QTableWidget
-        for row_number, row_data in enumerate(result):
-            self.tableWidget.insertRow(row_number)
-            for col_number, cell_data in enumerate(row_data):
-                self.tableWidget.setItem(row_number, col_number, QTableWidgetItem(str(cell_data)))
-
-        cursor.close()
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MyWindow()
-    window.show()
-    sys.exit(app.exec_())
+# Save the changes
+workbook.save(excel_file_path)
+print("Values updated in Excel.")
