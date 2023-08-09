@@ -1051,7 +1051,7 @@ class bordoreauform(QDialog):
         """
         #self.table_warehouseman.setItem(row,4,QTableWidgetItem("Confirmed"))
         id = self.table_warehouseman.item(self.row, 0).text()
-        price = str(self.ui.cout.text()) + " €"
+        price = str(self.ui.cout.text())
         source = str(self.ui.link.text())
         quantity = str(self.ui.quantity.text())
         description = str(self.ui.description.toPlainText())
@@ -1089,7 +1089,7 @@ class bordoreauform(QDialog):
                                     database=self.db.DB_NAME)
             mycursor = conn.cursor()
             
-            query = """UPDATE orders SET status='Confirmed' WHERE orderID='%s'"""%(id)
+            query = """UPDATE orders SET status='Confirmed', price=%s, quantity=%s WHERE orderID='%s'"""%(float(price), int(quantity), id)
             mycursor.execute(query)
             conn.commit()
             
