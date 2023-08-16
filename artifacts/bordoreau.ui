@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>777</width>
-    <height>542</height>
+    <width>1219</width>
+    <height>617</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,21 +17,14 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>20</y>
-     <width>631</width>
-     <height>491</height>
+     <y>10</y>
+     <width>1101</width>
+     <height>551</height>
     </rect>
    </property>
-   <column>
-    <property name="text">
-     <string>Bordoreau</string>
-    </property>
-   </column>
-   <column>
-    <property name="text">
-     <string>Action</string>
-    </property>
-   </column>
+   <property name="cursor" stdset="0">
+    <cursorShape>PointingHandCursor</cursorShape>
+   </property>
   </widget>
  </widget>
  <resources/>

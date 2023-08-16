@@ -13,8 +13,8 @@ from datetime import datetime
 import datetime as dt
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from openpyxl import load_workbook
-
+from openpyxl import load_workbook, Workbook
+from copy import copy
 
 from database import Database
 from configparser import ConfigParser
@@ -1026,7 +1026,7 @@ class bordoreauform(QDialog):
         self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
         
         #Local events
-        self.ui.gener_br_btn.clicked.connect(self.addToBordoreau)
+        self.ui.gener_br_btn.clicked.connect(self.generateBordoreau)
 
     def getNumberOfBordoreau(self):
         """
@@ -1046,53 +1046,60 @@ class bordoreauform(QDialog):
 
         return numb_bord
     
-    def addToBordoreau(self):
+    def generateBordoreau(self):
         """
         """
-        #self.table_warehouseman.setItem(row,4,QTableWidgetItem("Confirmed"))
-        id = self.table_warehouseman.item(self.row, 0).text()
-        price = str(self.ui.cout.text())
-        source = str(self.ui.link.text())
-        quantity = str(self.ui.quantity.text())
-        description = str(self.ui.description.toPlainText())
+        try:
+            id          = self.table_warehouseman.item(self.row, 0).text()
+            order       = self.table_warehouseman.item(self.row,1).text()
+            object      = self.table_warehouseman.item(self.row, 2).text()
+            name        = self.table_warehouseman.item(self.row, 3).text()
+            price       = str(self.ui.cout.text())
+            source      = str(self.ui.link.text())
+            quantity    = str(self.ui.quantity.text())
+            description = str(self.ui.description.toPlainText())
 
-        if not price or not source:
-            QMessageBox.about(self, "Warning","Both fields must be filled.")
-            return
-        #generate or update the excel file
-        excel_file = "./test.xlsx"
+            if not price or not source:
+                QMessageBox.about(self, "Warning","Both fields must be filled.")
+                return
+            #generate or update the excel file
+            excel_file = './Bordoreau/Bordoreau_' + str(name)+ '.xlsx'
+            if not os.path.exists(excel_file):
+                model_file = "./model.xlsx"
+                excel_file = './Bordoreau/Bordoreau_' + str(name)+ '.xlsx'
+                workbook = load_workbook(model_file)
+            else:
+                workbook = load_workbook(excel_file)
+            
+            sheet = workbook.active
+            next_row = sheet.max_row + 1 if sheet.max_row >= 5 else 5
 
-        workbook = load_workbook(excel_file)
-        sheet = workbook.active
-        for row_number, row in enumerate(sheet.iter_rows(min_row=5, values_only=True), start=5):
-            id_value = row[0]  # Assuming id is in the first column
-            if id_value == id:
-                # Update the value in the third column (column index is 3)
-                cell_price = sheet.cell(row=row_number, column=4)
-                cell_price.value = price
-                cell_quantity = sheet.cell(row=row_number, column=3)
-                cell_quantity.value = quantity
-                cell_source = sheet.cell(row=row_number, column=6)
-                cell_source.value = source
-                cell_description = sheet.cell(row=row_number, column=5)
-                cell_description.value = description
-        workbook.save(excel_file)
+            # Insert values into specific rows and columns
+            sheet.cell(row=next_row, column=1, value= id)
+            sheet.cell(row=next_row, column=2, value=object)
+            sheet.cell(row=next_row, column=3, value=quantity)
+            sheet.cell(row=next_row, column=4, value=price)
+            sheet.cell(row=next_row, column=5, value=description)
+            sheet.cell(row=next_row, column=6, value=source)
+            workbook.save(excel_file)
 
-        # Remove the cell widget from the table
-        empty_widget = QWidget()
-        self.table_warehouseman.setCellWidget(self.row, 6, empty_widget)
-        self.table_warehouseman.setCellWidget(self.row, 5, empty_widget)
-        self.table_warehouseman.setItem(self.row,4,QTableWidgetItem("Confirmed"))
+            # Remove the cell widget from the table
+            empty_widget = QWidget()
+            self.table_warehouseman.setCellWidget(self.row, 6, empty_widget)
+            self.table_warehouseman.setCellWidget(self.row, 5, empty_widget)
+            self.table_warehouseman.setItem(self.row,4,QTableWidgetItem("Confirmed"))
+        except Exception as e:
+            QMessageBox.about(self, "Error", str(e))
 
         try:
             conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                     database=self.db.DB_NAME)
             mycursor = conn.cursor()
-            
-            query = """UPDATE orders SET status='Confirmed', price=%s, quantity=%s WHERE orderID='%s'"""%(float(price), int(quantity), id)
+            query = """INSERT INTO purchases VALUES('%s', '%s', '%s', '%s', '%s', %s, %s)"""%(id, order, object, name, description, int(quantity), float(price))
             mycursor.execute(query)
-            conn.commit()
-            
+            query_update = """UPDATE orders SET status='Confirmed' WHERE orderID='%s'"""%(id)
+            mycursor.execute(query_update)
+            conn.commit() 
         except Exception as e:
             QMessageBox.about(self, "Warning", str(e))
         self.close()

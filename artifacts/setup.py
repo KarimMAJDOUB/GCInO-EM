@@ -9,7 +9,9 @@
 ################################################################################
 import os
 import random
+import shutil
 import configparser
+import subprocess
 from PyQt6.QtWidgets import QDialog, QTreeWidgetItem, QMainWindow, QWidget, QTableWidgetItem, QMessageBox, QDialog, QHBoxLayout, QPushButton
 from PyQt6.QtGui import QIcon, QColor
 from PyQt6.QtCore import Qt
@@ -49,7 +51,7 @@ class gcinodesign(QDialog):
         self.designTables()
         self.disableTab(self.tab)
         self.designCalendar()
-        #self.organiseTabsWithGrade()
+        self.organiseTabsWithRole()
 
     def designTables(self):
         cols=["Object","Type","Location","Calibration","Quantity", "Category"]
@@ -73,16 +75,21 @@ class gcinodesign(QDialog):
         else:
             for child_widget in widget.findChildren(QWidget):
                 child_widget.setVisible(True)
-    def organiseTabsWithGrade(self):
+    def organiseTabsWithRole(self):
         """
         """
         if self.LOGGED_USER_ROLE == "user":
-            self.tabwidget.removeTab(4)
-            self.tabwidget.removeTab(1)
+            self.tabwidget.removeTab(1)   #History
+            self.tabwidget.removeTab(3)   #Order warehouseman
+            self.tabwidget.removeTab(3)   #Order manager
         elif self.LOGGED_USER_ROLE == "warehouseman":
             self.tabwidget.removeTab(3)
+            self.tabwidget.removeTab(4)
+        elif self.LOGGED_USER_ROLE == "manager":
+            self.tabwidget.removeTab(3)
+            self.tabwidget.removeTab(3)
         else:
-            self.tabwidget.removeTab(5)
+            QMessageBox(self, "Error :", "No Role for this user, please check your database")
     
     def designCalendar(self):
         """
@@ -382,7 +389,7 @@ class gcinobox(QDialog):
             self.Box.addItem(var)
 
 class gcinoorders(QDialog):
-    def __init__(self, send_btn, request, name, description, quantity, cout, table_user, count_label, table_warehouseman):
+    def __init__(self, send_btn, request, name, description, quantity, cout, table_user, count_label, table_warehouseman, table_manager):
         """
         """
         super(gcinoorders, self).__init__()
@@ -405,6 +412,8 @@ class gcinoorders(QDialog):
         self.table2.setColumnWidth(4,100)
         self.table2.setColumnWidth(5,100)
         self.table2.setColumnWidth(6,150)
+        self.table3 = table_manager
+        self.table3.setColumnWidth(0,500)
 
         #Connect to Database
         self.db = Database()
@@ -429,6 +438,8 @@ class gcinoorders(QDialog):
         self.send_btn.clicked.connect(self.addOrder)
         self.send_btn.clicked.connect(self.fillOrdersTable)
         self.fillOrdersTable()
+        self.fillPurchasesTable()
+        self.table3.cellClicked.connect(self.openBordoreauExcel)
 
     def sendRequest(self):
         """
@@ -530,26 +541,6 @@ class gcinoorders(QDialog):
         except Exception as e:
             QMessageBox.about(self, "Warning", str(e))
 
-    def generateBordoreau(self, row):
-        """
-        """
-        order_id = self.table2.item(row,0).text()
-        name = self.table2.item(row,2).text()
-
-        excel_file = os.path.join("./", "test.xlsx")
-        workbook = load_workbook(excel_file)
-        sheet = workbook.active
-
-        # Find the next available row (starting from the 5th row)
-        next_row = sheet.max_row + 1 if sheet.max_row >= 5 else 5
-
-        # Insert values into specific rows and columns
-        sheet.cell(row=next_row, column=1, value= order_id)
-        sheet.cell(row=next_row, column=2, value=name)
-
-        # Save the changes
-        workbook.save(excel_file)
-
     def acceptClicked(self, row, cond='clicked'):
         """
         """
@@ -643,7 +634,6 @@ class gcinoorders(QDialog):
         accept_button.setFixedSize(20, 20)
         accept_button.clicked.connect(lambda _, row=row: self.acceptClicked(row))
         accept_button.clicked.connect(self.fillOrderTableByUser)
-        accept_button.clicked.connect(lambda _, row=row: self.generateBordoreau(row))
 
         refuse_button = QPushButton()
         refuse_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -748,7 +738,6 @@ class gcinoorders(QDialog):
         except Exception as e:
             QMessageBox.about(self, "Warning", str(e))
 
-
     def fillOrdersTable(self):
         """
         """
@@ -764,8 +753,6 @@ class gcinoorders(QDialog):
                                 managers m
                               ON
                                 m.id = o.user_id
-                            ORDER BY 
-                                o.status DESC
                            """
             mycursor.execute(query_select)
             data = mycursor.fetchall()
@@ -790,7 +777,6 @@ class gcinoorders(QDialog):
                     accept_button.setFixedSize(20, 20)
                     accept_button.clicked.connect(lambda _, row=table_row: self.acceptClicked(row))
                     accept_button.clicked.connect(self.fillOrderTableByUser)
-                    accept_button.clicked.connect(lambda _, row=table_row: self.generateBordoreau(row))
 
                     refuse_button = QPushButton()
                     refuse_button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -817,3 +803,62 @@ class gcinoorders(QDialog):
 
         except Exception as e:
             QMessageBox.about(self, "Warning", str(e))
+    
+    def confirmPurchases(self, row, excel_file, action="accept"):
+        """
+        """
+        now = datetime.now()
+        now = now.strftime("%Y_%m_%d")
+        if action == "accept":
+            self.table3.removeCellWidget(row, 1)
+            self.table3.setItem(row,1, QTableWidgetItem('Confirmed'))
+            shutil.move('./Bordoreau/' + excel_file, './Purchases/Confirmed/'+ str(now)+ '_' + excel_file)
+        else:
+            self.table3.removeCellWidget(row, 1)
+            self.table3.setItem(row,1, QTableWidgetItem('Declined'))
+            shutil.move('./Bordoreau/' + excel_file, './Purchases/Declined/'+ str(now) + '_' + excel_file)
+
+    def fillPurchasesTable(self):
+        """
+        """
+        directory_path = "./Bordoreau/" 
+        excel_files = [f for f in os.listdir(directory_path) if f.endswith(".xlsx")]
+        self.table3.setRowCount(len(excel_files))  # Nombre de lignes
+
+        for row, excel_file in enumerate(excel_files):
+            item = QTableWidgetItem(excel_file)
+            self.table3.setItem(row, 0, item)
+
+            accept_icon = QIcon("./accept.png")  # Replace with actual accept icon path
+            refuse_icon = QIcon("./rejected.png")
+            actions_layout = QHBoxLayout()
+            accept_button = QPushButton()
+            accept_button.setCursor(Qt.CursorShape.PointingHandCursor)
+            accept_button.setIcon(accept_icon)
+            accept_button.setFixedSize(20, 20)
+            accept_button.clicked.connect(lambda _,excel_file=excel_file, row=row: self.confirmPurchases(row, excel_file, action='accept'))
+        
+            refuse_button = QPushButton()
+            refuse_button.setCursor(Qt.CursorShape.PointingHandCursor)
+            refuse_button.setIcon(refuse_icon)
+            refuse_button.setFixedSize(20, 20)
+            refuse_button.clicked.connect(lambda _,excel_file=excel_file, row=row: self.confirmPurchases(row, excel_file, action='refuse'))
+            actions_layout.addWidget(accept_button)
+            actions_layout.addWidget(refuse_button)
+            actions_widget = QWidget()
+            actions_widget.setLayout(actions_layout)
+            self.table3.setCellWidget(row, 1, actions_widget)
+
+    def openBordoreauExcel(self, row, col):
+        """
+        """
+        excel_exe = r'C:\Program Files (x86)\Microsoft Office\root\Office16\EXCEL.EXE'
+        if col == 0:  # Colonne des noms de fichiers
+            file_name = self.table3.item(row, col).text()
+            file_path = os.path.join('./Bordoreau', file_name)
+            
+            if os.path.exists(file_path):
+                subprocess.run(f'start "" "{excel_exe}" "{file_path}"', shell=True)
+            else:
+                print(f"The file {file_path} does not exist!")
+

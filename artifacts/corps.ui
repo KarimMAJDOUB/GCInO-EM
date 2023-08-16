@@ -35,7 +35,7 @@
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="currentIndex">
-    <number>4</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="Tab1">
     <attribute name="title">
@@ -757,6 +757,34 @@ setColumnWidth(3, 200)
        </property>
       </column>
      </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_6">
+    <attribute name="title">
+     <string>Orders-Manager</string>
+    </attribute>
+    <widget class="QTableWidget" name="table_manager">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>20</y>
+       <width>1261</width>
+       <height>681</height>
+      </rect>
+     </property>
+     <property name="cursor" stdset="0">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <column>
+      <property name="text">
+       <string>Bordoreau</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Action</string>
+      </property>
+     </column>
     </widget>
    </widget>
    <widget class="QWidget" name="tab">

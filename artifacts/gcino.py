@@ -39,7 +39,7 @@ class gcinocorps(QMainWindow):
         
         self.returnForms()
         
-        self.gcino_orders = gcinoorders(self.ui.send_btn, self.ui.request, self.ui.name, self.ui.description, self.ui.quantity, self.ui.cout, self.ui.table_user, self.ui.count_label, self.ui.table_warehouseman)
+        self.gcino_orders = gcinoorders(self.ui.send_btn, self.ui.request, self.ui.name, self.ui.description, self.ui.quantity, self.ui.cout, self.ui.table_user, self.ui.count_label, self.ui.table_warehouseman, self.ui.table_manager)
         self.ui.clear_btn.clicked.connect(self.gcino_orders.clearContents)
         self.ui.table_warehouseman.cellClicked.connect(self.openApprouved)
 
