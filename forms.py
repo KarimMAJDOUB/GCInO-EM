@@ -13,14 +13,12 @@ from datetime import datetime
 import datetime as dt
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from openpyxl import load_workbook, Workbook
-from copy import copy
 
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
 from PyQt6.uic import loadUi
-from PyQt6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QFileDialog, QWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QFileDialog, QLineEdit
 from PyQt6.QtCore import QUrl
 from PyQt6.QtGui import QDesktopServices
 
@@ -69,7 +67,7 @@ class insertform(QDialog):
     def loadBox(self):
         """
         """
-        self.ui.TypeBox.currentTextChanged.connect(self.onBoxTextChanged)
+        self.TypeBox.currentTextChanged.connect(self.onBoxTextChanged)
         # Add list of project in comboBox
         conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
                                    database=self.db.DB_NAME)
@@ -101,9 +99,9 @@ class insertform(QDialog):
         data_type = cursor.fetchall()
         for i in data_type : 
             res = i[0]
-            self.ui.TypeBox.addItem(res)
+            self.TypeBox.addItem(res)
 
-        if data_role[0] == "user" and self.ui.TypeBox.currentText() == "Consumable":
+        if data_role[0] == "user" and self.TypeBox.currentText() == "Consumable":
             self.actionBox.setEnabled(False)
 
         cursor3 = conn.cursor()
@@ -155,32 +153,13 @@ class insertform(QDialog):
             mycursor.execute(query)
             data = mycursor.fetchall()
             if input_insert in data and actionText == "Adding":
-                    #UPDATE INST TABLE
                     query_update = "UPDATE object_dist SET Quantity= Quantity + %s WHERE Object = '%s' AND Type_Object='%s' AND Location ='%s' AND Calibration =%s AND project_name ='%s' "  % (int(quantityText), objectText, typeText, locationText, int(calibrationText), projectText)
                     mycursor.execute(query_update)
-                    conn.commit()
-                    self.close()
-                    
-                    #INSERT INTO HISTORIQUE TABLE
-                    now = datetime.now()
-                    date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-                    query_insert = "INSERT INTO historique(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, actionText, projectText)
-                    mycursor.execute(query_insert)
                     conn.commit()
                     self.close()
             elif input_insert in data and actionText == "Take Out":
                     query_update = "UPDATE object_dist SET Quantity= Quantity - %s WHERE Object = '%s' AND Type_Object='%s' AND Location ='%s' AND Calibration =%s AND project_name ='%s' "  % (int(quantityText), objectText, typeText, locationText, int(calibrationText), projectText)
                     mycursor.execute(query_update)
-                    query_delete = "DELETE FROM object_dist WHERE Quantity =0"
-                    mycursor.execute(query_delete)
-                    conn.commit()
-                    self.close() 
-
-                    #INSERT INTO HISTORIQUE TABLE
-                    now = datetime.now()
-                    date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-                    query_insert = "INSERT INTO historique(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, actionText, projectText)
-                    mycursor.execute(query_insert)
                     conn.commit()
                     self.close()
             else:
@@ -193,15 +172,8 @@ class insertform(QDialog):
                     mycursor.execute(query)
                     data = mycursor.fetchall()
 
-                    #INSERT INTO INST TABLE
                     query_insert = "INSERT INTO object_dist(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, actionText, projectText)
                     mycursor.execute(query_insert)
-                    conn.commit()
-                    self.close()
-
-                    #INSERT INTO HISTORIQUE TABLE
-                    query_insert_hist = "INSERT INTO historique(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, actionText, projectText)
-                    mycursor.execute(query_insert_hist)
                     conn.commit()
                     self.close()
                       
@@ -968,7 +940,7 @@ class modifyform(insertform, QDialog):
         quantityText    = str(self.uim.quantityText.text())
         projectText     = str(self.uim.projectBox.currentText())
         categoryText    = str(self.uim.categoryBox.currentText())
-        #coutText        = str(self.uim.coutText.text())
+        #coutText       = str(self.uim.coutText.text())
         
         old_object = self.items[0].text()
         old_type = self.items[1].text()
@@ -990,7 +962,7 @@ class modifyform(insertform, QDialog):
                                 database=self.db.DB_NAME)
             mycursor = conn.cursor()
             if int(quantityText) == 0:
-                query_delete ="DELETE FROM object_dist where Object= '%s' AND Type_object='%s' AND Location='%s' AND Calibration=%s AND Category='%s'" % (objectText,typeText, locationText, int(calibrationText), categoryText)
+                query_delete ="DELETE FROM object_dist where Object= '%s'"%(objectText)
                 mycursor.execute(query_delete)
                 conn.commit()
                 self.close()
@@ -1001,105 +973,3 @@ class modifyform(insertform, QDialog):
                 mycursor.execute(query_update)
                 conn.commit()
                 self.close()
-
-                now = datetime.now()
-                date_time = now.strftime("%Y-%m-%d %H:%M:%S")
-                query_insert = "INSERT INTO historique(Object,Type_object,Location, Calibration, Quantity, Category,operation_datetime,user_id,actions,project_name) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" %(objectText,typeText,locationText,calibrationText,quantityText,categoryText, date_time, self.LOGGED_USER_ID, "Changing", projectText)
-                mycursor.execute(query_insert)
-                conn.commit()
-                self.close()
-
-class bordoreauform(QDialog):
-    def __init__(self, table_warehouseman, row):
-        """
-        """
-        super(bordoreauform, self).__init__()
-        self.ui = loadUi(os.path.join(os.path.dirname(__file__), "approuved.ui"), self)
-        self.table_warehouseman = table_warehouseman
-        self.row = row
-
-        #Connect to DB
-        self.db = Database()
-        config_object = ConfigParser()
-        config_object.read("config.ini")
-        userInfo = config_object["USERINFO"]
-        self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
-        
-        #Local events
-        self.ui.gener_br_btn.clicked.connect(self.generateBordoreau)
-
-    def getNumberOfBordoreau(self):
-        """
-        """
-        try:
-            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
-                                    database=self.db.DB_NAME)
-            mycursor = conn.cursor()
-            
-            query_select = """SELECT count(Distinct(user_id)) from orders where status='Approuved'"""
-            mycursor.execute(query_select)
-            data = mycursor.fetchall()
-            for i in data:
-                numb_bord = i[0]      
-        except Exception as e:
-            QMessageBox.about(self, "Warning", str(e))
-
-        return numb_bord
-    
-    def generateBordoreau(self):
-        """
-        """
-        try:
-            id          = self.table_warehouseman.item(self.row, 0).text()
-            order       = self.table_warehouseman.item(self.row,1).text()
-            object      = self.table_warehouseman.item(self.row, 2).text()
-            name        = self.table_warehouseman.item(self.row, 3).text()
-            price       = str(self.ui.cout.text())
-            source      = str(self.ui.link.text())
-            quantity    = str(self.ui.quantity.text())
-            description = str(self.ui.description.toPlainText())
-
-            if not price or not source:
-                QMessageBox.about(self, "Warning","Both fields must be filled.")
-                return
-            #generate or update the excel file
-            excel_file = './Bordoreau/Bordoreau_' + str(name)+ '.xlsx'
-            if not os.path.exists(excel_file):
-                model_file = "./model.xlsx"
-                excel_file = './Bordoreau/Bordoreau_' + str(name)+ '.xlsx'
-                workbook = load_workbook(model_file)
-            else:
-                workbook = load_workbook(excel_file)
-            
-            sheet = workbook.active
-            next_row = sheet.max_row + 1 if sheet.max_row >= 5 else 5
-
-            # Insert values into specific rows and columns
-            sheet.cell(row=next_row, column=1, value= id)
-            sheet.cell(row=next_row, column=2, value=object)
-            sheet.cell(row=next_row, column=3, value=quantity)
-            sheet.cell(row=next_row, column=4, value=price)
-            sheet.cell(row=next_row, column=5, value=description)
-            sheet.cell(row=next_row, column=6, value=source)
-            workbook.save(excel_file)
-
-            # Remove the cell widget from the table
-            empty_widget = QWidget()
-            self.table_warehouseman.setCellWidget(self.row, 6, empty_widget)
-            self.table_warehouseman.setCellWidget(self.row, 5, empty_widget)
-            self.table_warehouseman.setItem(self.row,4,QTableWidgetItem("Confirmed"))
-        except Exception as e:
-            QMessageBox.about(self, "Error", str(e))
-
-        try:
-            conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
-                                    database=self.db.DB_NAME)
-            mycursor = conn.cursor()
-            query = """INSERT INTO purchases VALUES('%s', '%s', '%s', '%s', '%s', %s, %s)"""%(id, order, object, name, description, int(quantity), float(price))
-            mycursor.execute(query)
-            query_update = """UPDATE orders SET status='Confirmed' WHERE orderID='%s'"""%(id)
-            mycursor.execute(query_update)
-            conn.commit() 
-        except Exception as e:
-            QMessageBox.about(self, "Warning", str(e))
-        self.close()

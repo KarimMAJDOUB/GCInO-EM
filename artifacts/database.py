@@ -7,7 +7,7 @@ class Database:
         # Fetch configuration Data
         # Read config.ini file
         config_object = ConfigParser()
-        self.path_to_config = os.path.dirname(os.path.dirname(__file__)) + "\system_files\config.ini"
+        self.path_to_config = "config.ini"
         config_object.read(self.path_to_config)
 
         # Get the password

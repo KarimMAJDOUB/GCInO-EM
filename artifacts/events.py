@@ -8,22 +8,18 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 import os
-from forms import insertform, profileform, tendency, projectform, modifyform
-from PyQt6.QtWidgets import QDialog, QTableWidget, QTableWidgetItem, QMessageBox, QApplication
-import sys
-from PyQt6.uic import loadUi
-
+from forms import insertform, profileform, tendency, projectform, bordoreauform
+from PyQt6.QtWidgets import QDialog, QTableWidgetItem, QMessageBox, QComboBox, QPushButton
+import threading
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
-
-from setup import gcinotables
+from setup import gcinotree, gcinotables
 
 class eventshandler(QDialog):
     def __init__(self):
         """
         """
-        self.openModify()
 
     def openInsertionForm(self):
         """
@@ -45,21 +41,8 @@ class eventshandler(QDialog):
         """
         tendency().exec()
 
-    def openModify(self):
-        """
-        """
-        ui_ = loadUi("corps.ui")
-        table = ui_.tableWidget
-        table2 = ui_.tableWidget_2
-        btn = ui_.export_csv_btn
-        type='one'
-        table_fin = gcinotables(table, table2, btn, type).loadData()[0]
-        modify_dialog = modifyform(table_fin)
-        table.cellClicked.connect(modify_dialog.init_ui)
-        #modify_dialog.exec()
-
 class filterevents(QDialog):
-    def __init__(self, Box, table, table2, col_name, treeWidget, treeWidget_2, search, type):
+    def __init__(self, Box, table, table2, table3, col_name, treeWidget, treeWidget_2, search, calendar, type):
         """
         """
         super(filterevents, self).__init__()
@@ -70,14 +53,18 @@ class filterevents(QDialog):
         self.tree_widget2 = treeWidget_2
         self.table2 = table2
         self.table2.setColumnHidden(5, True)
-        self.Box[3].setEnabled(False)
+        self.table3 = table3
         self.search = search
         self.search.setPlaceholderText("Search...")
         self.type = type
-        
+        self.calendar = calendar
+        self.calendar.setVisible(False)
+        self.start_date = None
+        self.end_date = None
+
         self.db = Database()
         config_object = ConfigParser()
-        self.path_to_config = os.path.dirname(os.path.dirname(__file__)) + "\system_files\config.ini"
+        self.path_to_config ="config.ini"
         config_object.read(self.path_to_config)
         userInfo = config_object["USERINFO"]
         self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
@@ -93,10 +80,10 @@ class filterevents(QDialog):
             if filter_option != "All":
                 filters[self.col_name[i]] = filter_option
             if filter_option == "Consumable":
-                self.table.setColumnHidden(4, True)
-                self.Box[3].setEnabled(False)
+                #self.table.setColumnHidden(4, False)
+                self.Box[3].setEnabled(True)
             elif filter_option == "Tooling":
-                self.table.setColumnHidden(4, False)
+                #self.table.setColumnHidden(4, False)
                 self.Box[3].setEnabled(True)
 
         conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
@@ -105,7 +92,7 @@ class filterevents(QDialog):
                         o.Object, o.Type_object, o.Location, CAST(o.Calibration as char),actions, CAST(o.Quantity as char), m.name,
                         CAST(o.operation_datetime as char), o.project_name
                     FROM 
-                        fakegcino.object_dist as o
+                        fakegcino.historique as o
                     INNER JOIN
                         fakegcino.managers as m
                     ON
@@ -113,8 +100,35 @@ class filterevents(QDialog):
                     WHERE 
                         1=1"""
         for filter_name, filter_value in filters.items():
-                query += f" AND {filter_name} = '{filter_value}'"
+            query += f" AND {filter_name} = '{filter_value}'"
 
+        with conn.cursor() as cursor:
+            cursor.execute(query)
+            result = cursor.fetchall()
+            self.table.setRowCount(len(result))
+            for row_idx, row in enumerate(result):
+                for col_idx, col_value in enumerate(row):
+                    item = QTableWidgetItem(str(col_value))
+                    self.table.setItem(row_idx, col_idx, item)
+        return query
+    
+    def filterCalendar(self, from_box=False):
+        query = self.filterBox()
+        selected_date = self.calendar.selectedDate()
+        if not self.start_date:
+            self.start_date = selected_date
+            query += f" AND date(operation_datetime) = '{selected_date.toString('yyyy-MM-dd')}'"
+            
+        elif not self.end_date:
+            self.end_date = selected_date
+            query += f" AND date(operation_datetime) >= '{self.start_date.toString('yyyy-MM-dd')}' AND date(operation_datetime) <= '{selected_date.toString('yyyy-MM-dd')}'"
+        else:
+            self.start_date = selected_date
+            self.end_date = None
+            query += f" AND date(operation_datetime) = '{selected_date.toString('yyyy-MM-dd')}'"
+        conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                        database=self.db.DB_NAME)
+        
         with conn.cursor() as cursor:
             cursor.execute(query)
             result = cursor.fetchall()
@@ -254,21 +268,148 @@ class filterevents(QDialog):
             self.tree_widget.expandAll()
             self.tree_widget2.expandAll()
 
-
     def resetTable(self):
         # Clear any selection in the tree view
+        self.tree_widget2.setVisible(False)
         self.tree_widget.clearSelection()
+        mod_tree = gcinotree(self.tree_widget, self.tree_widget2)
+        btn = QPushButton()
+        box = QComboBox()
+        mod_hist = gcinotables(self.table2, self.table, self.table3, btn, box)
 
-        # Reset the table with initial data
-        conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
-                                   database=self.db.DB_NAME)
-        cursor = conn.cursor()
-        sql_query = """SELECT 
-                            Object, Type_object, Location, CAST(Calibration as char), CAST(Quantity as char), Category
-                        FROM 
-                            fakegcino.object_dist
-                        """
-        cursor.execute(sql_query)
-        myresult = cursor.fetchall()
-        initial_data = list(myresult)
-        self.populateTable(initial_data)
+class localisation():
+
+    def __init__(self, table):
+        """
+        """
+        super(localisation, self).__init__()
+        self.selected_object = None
+        self.table = table
+        self.table.cellClicked.connect(self.cellClicked)  # Connectez le signal cellClicked à la fonction
+
+        self.db = Database()
+
+        config_object = ConfigParser()
+        self.path_to_config = "config.ini"
+        config_object.read(self.path_to_config)
+        userInfo = config_object["USERINFO"]
+        self.LOGGED_USER_ID = userInfo["LOGGED_USER_ID"]
+
+    def cellClicked(self, row, col):
+        if col == 0:
+            item = self.table.item(row, col)
+            if item:
+                self.selected_object = item.text()
+                print("Objet sélectionné :", self.selected_object)
+
+    def activateLED(self):
+        if self.selected_object is not None:
+            update_on_query = f"UPDATE object_loc SET LED = 1 WHERE Object = '{self.selected_object}'"
+            update_off_query = f"UPDATE object_loc SET LED = 0 WHERE Object = '{self.selected_object}'"
+
+            def update_led_on():
+                conn = None
+                cursor = None
+                try:
+                    conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                              database=self.db.DB_NAME)
+                    cursor = conn.cursor()
+
+                    cursor.execute(update_on_query)
+                    conn.commit()
+                    print("LED activée avec succès pour l'objet :", self.selected_object)
+
+                    # Planifier la mise hors tension après 10 secondes
+                    threading.Timer(20, update_led_off).start()
+
+                except Exception as e:
+                    print("Erreur lors de l'activation de la LED :", str(e))
+
+                finally:
+                    if cursor:
+                        cursor.close()
+                    if conn:
+                        conn.close()
+
+            def update_led_off():
+                conn = None
+                cursor = None
+                try:
+                    conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                              database=self.db.DB_NAME)
+                    cursor = conn.cursor()
+
+                    cursor.execute(update_off_query)
+                    conn.commit()
+                    print("LED désactivée avec succès pour l'objet :", self.selected_object)
+
+                except Exception as e:
+                    print("Erreur lors de la désactivation de la LED :", str(e))
+
+                finally:
+                    if cursor:
+                        cursor.close()
+                    if conn:
+                        conn.close()
+
+            # Lancer le processus d'activation
+            update_led_on()
+
+        else:
+            print("Aucun objet sélectionné.")
+
+    def activateBUZZER(self):
+        if self.selected_object is not None:
+            update_on_query = f"UPDATE object_loc SET Buzzer = 1 WHERE Object = '{self.selected_object}'"
+            update_off_query = f"UPDATE object_loc SET Buzzer = 0 WHERE Object = '{self.selected_object}'"
+
+            def update_buzzer_on():
+                conn = None
+                cursor = None
+                try:
+                    conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                              database=self.db.DB_NAME)
+                    cursor = conn.cursor()
+
+                    cursor.execute(update_on_query)
+                    conn.commit()
+                    print("Buzzer activée avec succès pour l'objet :", self.selected_object)
+
+                    # Planifier la mise hors tension après 10 secondes
+                    threading.Timer(20, update_buzzer_off).start()
+
+                except Exception as e:
+                    print("Erreur lors de l'activation de la Buzzer :", str(e))
+
+                finally:
+                    if cursor:
+                        cursor.close()
+                    if conn:
+                        conn.close()
+
+            def update_buzzer_off():
+                conn = None
+                cursor = None
+                try:
+                    conn = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME, password=self.db.DB_PASSWORD,
+                                              database=self.db.DB_NAME)
+                    cursor = conn.cursor()
+
+                    cursor.execute(update_off_query)
+                    conn.commit()
+                    print("Buzzer désactivée avec succès pour l'objet :", self.selected_object)
+
+                except Exception as e:
+                    print("Erreur lors de la désactivation de la Buzzer :", str(e))
+
+                finally:
+                    if cursor:
+                        cursor.close()
+                    if conn:
+                        conn.close()
+
+            # Lancer le processus d'activation
+            update_buzzer_on()
+
+        else:
+            print("Aucun objet sélectionné.")

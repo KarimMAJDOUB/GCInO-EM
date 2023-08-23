@@ -270,7 +270,7 @@ class forgetpassword(QDialog):
                 mydb = MySQLdb.Connection(host='localhost',
                                                 database='fakegcino',
                                                 user='root',
-                                                password='Krayem99882056&&&'
+                                                password='root'
                                                 )
                 sql_query = "select email from managers where email = %s"
                 cur = mydb.cursor()
@@ -283,7 +283,7 @@ class forgetpassword(QDialog):
                         mydb = MySQLdb.Connection(host='localhost',
                                                 database='fakegcino',
                                                 user='root',
-                                                password='Krayem99882056&&&'
+                                                password='root'
                                                 )
                         sql_query = "UPDATE managers SET password = %s WHERE email = %s"
                         cur = mydb.cursor()

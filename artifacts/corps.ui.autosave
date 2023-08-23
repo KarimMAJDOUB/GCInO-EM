@@ -35,7 +35,7 @@
     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="Tab1">
     <attribute name="title">
@@ -856,7 +856,7 @@ setColumnWidth(3, 200)
      </property>
      <column>
       <property name="text">
-       <string>Bordoreau</string>
+       <string>Bordereau</string>
       </property>
      </column>
      <column>
@@ -882,7 +882,7 @@ setColumnWidth(3, 200)
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="page">
     <property name="geometry">
