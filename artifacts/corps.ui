@@ -952,7 +952,9 @@ setColumnWidth(3, 200)
       <x>0</x>
       <y>0</y>
       <width>127</width>
+
       <height>191</height>
+
      </rect>
     </property>
     <attribute name="icon">

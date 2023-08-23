@@ -11,6 +11,7 @@ import os
 from forms import insertform, profileform, tendency, projectform, bordoreauform
 from PyQt6.QtWidgets import QDialog, QTableWidgetItem, QMessageBox, QComboBox, QPushButton
 import threading
+
 from database import Database
 from configparser import ConfigParser
 import pymysql.connections as MySQLdb
