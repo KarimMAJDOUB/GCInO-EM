@@ -6,258 +6,139 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>344</width>
-    <height>671</height>
+    <width>347</width>
+    <height>796</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>2</y>
-     <width>315</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Object</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>71</y>
-     <width>315</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Type</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="calibrationText">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>245</y>
-     <width>315</width>
-     <height>26</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="locationText">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>176</y>
-     <width>315</width>
-     <height>26</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>208</y>
-     <width>315</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Calibration</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="objectText">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>39</y>
-     <width>315</width>
-     <height>26</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>140</y>
-     <width>315</width>
-     <height>30</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Location</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="TypeBox">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>100</y>
-     <width>311</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <item>
-    <property name="text">
-     <string>Consumable</string>
-    </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="2">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Object</string>
+     </property>
+    </widget>
    </item>
-   <item>
-    <property name="text">
-     <string>Tooling</string>
-    </property>
+   <item row="1" column="0" colspan="2">
+    <widget class="QLineEdit" name="objectText"/>
    </item>
-  </widget>
-  <widget class="QLabel" name="label_6">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>270</y>
-     <width>315</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Quantity</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="quantityText">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>310</y>
-     <width>315</width>
-     <height>26</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>490</y>
-     <width>315</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Project</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="projectBox">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>530</y>
-     <width>311</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="cancelButton">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>620</y>
-     <width>315</width>
-     <height>29</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>PointingHandCursor</cursorShape>
-   </property>
-   <property name="text">
-    <string>Cancel</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="insertButton">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>580</y>
-     <width>315</width>
-     <height>29</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>PointingHandCursor</cursorShape>
-   </property>
-   <property name="text">
-    <string>Insert</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_7">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>421</y>
-     <width>315</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Action</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="actionBox">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>450</y>
-     <width>311</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="categoryBox">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>380</y>
-     <width>311</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_8">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>340</y>
-     <width>315</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Category</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="updateButton">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>580</y>
-     <width>315</width>
-     <height>29</height>
-    </rect>
-   </property>
-   <property name="cursor">
-    <cursorShape>PointingHandCursor</cursorShape>
-   </property>
-   <property name="text">
-    <string>Update</string>
-   </property>
-  </widget>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Type</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QComboBox" name="TypeBox">
+     <item>
+      <property name="text">
+       <string>Consumable</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Tooling</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Location</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QLineEdit" name="locationText"/>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>Calibration</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QLineEdit" name="calibrationText"/>
+   </item>
+   <item row="8" column="0" colspan="2">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Quantity</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="2">
+    <widget class="QLineEdit" name="quantityText"/>
+   </item>
+   <item row="10" column="0" colspan="2">
+    <widget class="QLabel" name="label_8">
+     <property name="text">
+      <string>Category</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="0" colspan="2">
+    <widget class="QComboBox" name="categoryBox"/>
+   </item>
+   <item row="12" column="0" colspan="2">
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Action</string>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="0" colspan="2">
+    <widget class="QComboBox" name="actionBox"/>
+   </item>
+   <item row="14" column="0" colspan="2">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Project</string>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="0" colspan="2">
+    <widget class="QComboBox" name="projectBox"/>
+   </item>
+   <item row="16" column="0">
+    <widget class="QPushButton" name="updateButton">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="text">
+      <string>Update</string>
+     </property>
+    </widget>
+   </item>
+   <item row="16" column="1">
+    <widget class="QPushButton" name="insertButton">
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="text">
+      <string>Insert</string>
+     </property>
+    </widget>
+   </item>
+   <item row="17" column="0" colspan="2">
+    <widget class="QPushButton" name="cancelButton">
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="text">
+      <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>
