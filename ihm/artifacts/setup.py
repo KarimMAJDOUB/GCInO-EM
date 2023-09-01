@@ -103,13 +103,14 @@ class gcinodesign(QDialog):
         event.accept() 
 
 class gcinotables(QMainWindow):
-    def __init__(self, tableWidget, tableWidget2,tableWidget3, tabUser,  btn, type):
+    def __init__(self, tableWidget, tableWidget2, tableWidget3, tabUser, tableAccessManagement,  btn, type):
         """
         """
         super(gcinotables, self).__init__()
         self.tableWidget = tableWidget
         self.tableWidget_2 = tableWidget2
         self.tableWidget_3 = tableWidget3
+        self.tabAccess = tableAccessManagement
         self.tab_user = tabUser
         #self.tableWidget_2.setColumnHidden(4, True)
         self.btn = btn
@@ -250,10 +251,41 @@ class gcinotables(QMainWindow):
                 self.tab_user.setItem(table_row4, 0, QTableWidgetItem(row[0]))
                 self.tab_user.setItem(table_row4, 1, status_item)
                 table_row4 = table_row4 +1
+
+            conn5 = MySQLdb.Connection(host=self.db.DB_SERVER, user=self.db.DB_USERNAME,
+                                       password=self.db.DB_PASSWORD,
+                                       database=self.db.DB_NAME
+                                       )
+            cursor5 = conn5.cursor()
+            sql_query5 = """SELECT 
+                                        id, firstname , lastname, name, username, email, password, Society, Entity, ismanager, role
+                                    FROM 
+                                        fakegcino.managers
+                                    """
+            cursor5.execute(sql_query5)
+            myresult5 = cursor5.fetchall()
+
+            table_row5 = 0
+            self.tabAccess.setRowCount(len(myresult5))
+            for row in myresult5:
+                self.tabAccess.setItem(table_row5, 0, QTableWidgetItem(row[1]))
+                self.tabAccess.setItem(table_row5, 1, QTableWidgetItem(row[2]))
+                self.tabAccess.setItem(table_row5, 2, QTableWidgetItem(row[3]))
+                self.tabAccess.setItem(table_row5, 3, QTableWidgetItem(row[4]))
+                self.tabAccess.setItem(table_row5, 4, QTableWidgetItem(row[5]))
+                self.tabAccess.setItem(table_row5, 5, QTableWidgetItem(row[6]))
+                self.tabAccess.setItem(table_row5, 6, QTableWidgetItem(row[7]))
+                self.tabAccess.setItem(table_row5, 7, QTableWidgetItem(row[8]))
+                self.tabAccess.setItem(table_row5, 8, QTableWidgetItem(row[9]))
+                self.tabAccess.setItem(table_row5, 9, QTableWidgetItem(row[10]))
+                self.tabAccess.setItem(table_row5, 10, QTableWidgetItem(row[11]))
+                table_row5 = table_row5 + 1
+
+
         except Exception as e:
             print("Error while connecting to MySQL",e)
 
-        return self.tableWidget, self.tableWidget_2, self.tableWidget_3
+        return self.tableWidget, self.tableWidget_2, self.tableWidget_3, self.tabAccess
 
     def exportCSV(self):
         now = datetime.now()
